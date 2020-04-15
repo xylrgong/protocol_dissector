@@ -74,62 +74,62 @@ VP_PART = (
 class COTP_Base(Packet):
     name = "COTP"
     fields_desc = [
-        XByteField("Length", 0x00),
-        ByteEnumField("PDUType", 0x00, TPDU_TYPE[0])
+        XByteField("length", 0x00),
+        ByteEnumField("pdutype", 0x00, TPDU_TYPE[0])
     ]
 
 
 class COTP_AK(Packet):
     name = "COTP_AK"
     fields_desc = [
-        XShortField('Dref', 0x0000),
-        XIntField("TPDUnr", 0X00000000),
-        XShortField("Credit", 0x0001)
+        XShortField('dref', 0x0000),
+        XIntField("tpdunr", 0X00000000),
+        XShortField("credit", 0x0001)
     ]
 
 
 class COTP_DR(Packet):
     name = "COTP_DR"
     fields_desc = [
-        XShortField('Dref', 0x0000),
-        XShortField("Sref", 0X0000),
-        XShortField("Credit", 0x0001),
-        ByteField('Cause', 128)
+        XShortField('dref', 0x0000),
+        XShortField("sref", 0X0000),
+        XShortField("credit", 0x0001),
+        ByteField('cause', 128)
     ]
 
 
 class COTP_DC(Packet):
     name = "COTP_DC"
     fields_desc = [
-        XShortField('Dref', 0x0000),
-        XShortField("Sref", 0X0000)
+        XShortField('dref', 0x0000),
+        XShortField("sref", 0X0000)
     ]
 
 
 class COTP_CC(Packet):
     name = "COTP_CC"
     fields_desc = [
-        XShortField('Dref', 0x0000),
-        XShortField("Sref", 0x0000),
-        XByteField("ClassOption", 0x00)
+        XShortField('dref', 0x0000),
+        XShortField("sref", 0x0000),
+        XByteField("classoption", 0x42)
     ]
 
 
 class COTP_CR(Packet):
     name = "COTP_CR"
     fields_desc = [
-        XShortField('Dref', 0x0000),
-        XShortField("Sref", 0x0000),
-        XByteField("ClassOption", 0x42)
+        XShortField('dref', 0x0000),
+        XShortField("sref", 0x0000),
+        XByteField("classoption", 0x42)
     ]
 
 
 class COTP_DT(Packet):
     name = "COTP_DT"
     fields_desc = [
-        XShortField('Dref', 0x0000),
+        XShortField('dref', 0x0000),
         FlagsField("EOT", 1, 1, ["Last Data Unit"]),
-        BitField("TPDUnr", 0, 31)
+        BitField("tpdunr", 0, 31)
     ]
 
 
@@ -146,35 +146,35 @@ bind_layers(Dot3, LLC)
 bind_layers(LLC, CLNP, dsap=0xfe)
 bind_layers(LLC, CLNP, ssap=0xfe)
 bind_layers(CLNP, COTP_Base)
-bind_layers(COTP_Base, COTP_AK, PDUType=0x60)
-bind_layers(COTP_Base, COTP_DR, PDUType=0x80)
-bind_layers(COTP_Base, COTP_DC, PDUType=0xc0)
-bind_layers(COTP_Base, COTP_CC, PDUType=0xd0)
-bind_layers(COTP_Base, COTP_CR, PDUType=0xe8)
-bind_layers(COTP_Base, COTP_DT, PDUType=0xf0)
+bind_layers(COTP_Base, COTP_AK, pdutype=0x60)
+bind_layers(COTP_Base, COTP_DR, pdutype=0x80)
+bind_layers(COTP_Base, COTP_DC, pdutype=0xc0)
+bind_layers(COTP_Base, COTP_CC, pdutype=0xd0)
+bind_layers(COTP_Base, COTP_CR, pdutype=0xe8)
+bind_layers(COTP_Base, COTP_DT, pdutype=0xf0)
 
 
-# eg: COTP(PDUType='CR_TPDU', params=[
+# eg: COTP(pdu_name='CR_TPDU', params=[
 #             ('VP_CHECKSUM', 0x1234), 'VP_TPDU_SIZE', 'VP_VERSION_NR',
 #             'VP_OPT_SEL', ('VP_SRC_TSAP', 'S5_PGDIR'), ('VP_DST_TSAP', 'Eop')
 #         ])
-def COTP(pdu_name=None, params=[]):
+def COTP(pdu_name=None, params=[], **kwargs):
     pdu_code = TPDU_TYPE[1][pdu_name]
     need_variant_part = True
-    cotp_pkt = COTP_Base(PDUType=pdu_code)
+    cotp_pkt = COTP_Base(pdutype=pdu_code)
 
     if pdu_code == 0x60:  # AK
-        cotp_pkt = cotp_pkt / COTP_AK()
+        cotp_pkt = cotp_pkt / COTP_AK(**kwargs)
     elif pdu_code == 0x80:  # DR
-        cotp_pkt = cotp_pkt / COTP_DR()
+        cotp_pkt = cotp_pkt / COTP_DR(**kwargs)
     elif pdu_code == 0xc0:  # DC
-        cotp_pkt = cotp_pkt / COTP_DC()
+        cotp_pkt = cotp_pkt / COTP_DC(**kwargs)
     elif pdu_code == 0xd0:  # CC
-        cotp_pkt = cotp_pkt / COTP_CC()
+        cotp_pkt = cotp_pkt / COTP_CC(**kwargs)
     elif pdu_code == 0xe8:  # CR
-        cotp_pkt = cotp_pkt / COTP_CR()
+        cotp_pkt = cotp_pkt / COTP_CR(**kwargs)
     elif pdu_code == 0xf0:  # DT
-        cotp_pkt = cotp_pkt / COTP_DT()
+        cotp_pkt = cotp_pkt / COTP_DT(**kwargs)
     else:
         need_variant_part = False
         print('TPDU类型暂不支持，输入值：{}'.format(pdu_name))
@@ -231,7 +231,7 @@ def dissect_cotp(buf):
             return pkt
 
         cotp_subset_len = lengthof_fields_desc(layers[-2].fields_desc)
-        params_len = pkt.Length + 1 - 2 - cotp_subset_len
+        params_len = pkt.length + 1 - 2 - cotp_subset_len
         i = 14 + 3 + 1 + 2 + cotp_subset_len
         pkt = Dot3(buf[:i])
         while params_len > 0:
