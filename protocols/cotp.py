@@ -3,6 +3,9 @@ from scapy.fields import *
 from scapy.compat import chb
 from scapy.layers.l2 import Dot3, LLC
 from utils.dissect_helper import *
+import logging as log
+
+MIN_PKT_LENGTH = 60
 
 
 # CLNP is normally not implemented
@@ -11,6 +14,12 @@ class CLNP(Packet):
     fields_desc = [
         XByteField('Inactive subset', 0x00)
     ]
+
+    def post_build(self, pkt, pay):
+        if len(pay) < MIN_PKT_LENGTH - 18:
+            padding_len = MIN_PKT_LENGTH - 18 - len(pay)
+            pay += b'\x00' * padding_len
+        return pkt + pay
 
 
 ##################################################
@@ -28,7 +37,7 @@ TPDU_TYPE = (
         0x70: "ER_TPDU",  # COTP, ER TPDU Error
         0x80: "DR_TPDU",  # COTP, DR Disconnect Request
         0xc0: "DC_TPDU",  # COTP, DC Disconnect Confirm
-        0xd0: "CC_TPDU",  # COTP, CC Connect Confirm
+        0xd1: "CC_TPDU",  # COTP, CC Connect Confirm
         0xe8: "CR_TPDU",  # COTP, CR Connect Request
         0xf0: "DT_TPDU",  # COTP, DT Data
         0x00: "Unknown"
@@ -83,8 +92,8 @@ class COTP_AK(Packet):
     name = "COTP_AK"
     fields_desc = [
         XShortField('dref', 0x0000),
-        XIntField("tpdunr", 0X00000000),
-        XShortField("credit", 0x0001)
+        XIntField("tpdunr", 0x00000000),
+        XShortField("credit", 0x0000)
     ]
 
 
@@ -93,7 +102,7 @@ class COTP_DR(Packet):
     fields_desc = [
         XShortField('dref', 0x0000),
         XShortField("sref", 0X0000),
-        XShortField("credit", 0x0001),
+        XShortField("credit", 0x0000),
         ByteField('cause', 128)
     ]
 
@@ -114,7 +123,8 @@ class COTP_CC(Packet):
         XByteField("classoption", 0x42)
     ]
 
-
+# 参数说明： dref 在 CR-TPDU 中是 0x0000。
+#           sref 是非 0 的，且不能是已使用或冻结的，除此之外可任意选择。
 class COTP_CR(Packet):
     name = "COTP_CR"
     fields_desc = [
@@ -177,7 +187,7 @@ def COTP(pdu_name=None, params=[], **kwargs):
         cotp_pkt = cotp_pkt / COTP_DT(**kwargs)
     else:
         need_variant_part = False
-        print('TPDU类型暂不支持，输入值：{}'.format(pdu_name))
+        log.info('TPDU类型暂不支持，输入值：{}'.format(pdu_name))
 
     if need_variant_part:
         for i in range(len(params)):
@@ -199,14 +209,14 @@ def COTP(pdu_name=None, params=[], **kwargs):
                 elif isinstance(param_value, str):
                     param_buffer = to8byte(param_value)
                 else:
-                    print("不支持的参数值, 参数名：{0}, 参数值：{1}".format(param_name, param_value))
+                    log.info("不支持的参数值, 参数名：{0}, 参数值：{1}".format(param_name, param_value))
                     continue
 
                 cotp_pkt = cotp_pkt / COTP_Parameter(ParamCode=param_code, ParamLength=param_len, Parameter=param_buffer)
             else:
-                print("不支持的参数, 参数名：{0}".format(param_name))
+                log.info("不支持的参数, 参数名：{0}".format(param_name))
                 continue
-    cotp_pkt.Length = len(cotp_pkt) - 1
+    cotp_pkt.length = len(cotp_pkt) - 1
     return cotp_pkt
 
 
@@ -220,7 +230,7 @@ def dissect_param(buf, i):
 
 def dissect_cotp(buf):
     if len(buf) < (14 + 3 + 1):
-        print("不完整的COTP数据包，长度：{}".format(len(buf)))
+        log.warning("不完整的COTP数据包，长度：{}".format(len(buf)))
         return
     pkt = Dot3(buf)  # result: Dot3() / LLC() / CLNP() / COTP_Base() / COTP_?() / Raw()
 

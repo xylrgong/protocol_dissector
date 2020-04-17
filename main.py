@@ -2,6 +2,8 @@ from scapy.layers.l2 import Dot3, LLC
 from protocols.cotp import *
 from scapy.utils import hexdump
 from automata.cotp.cotp_automaton import *
+from automata.cotp.cotp_config import *
+from config import *
 
 
 def main():
@@ -35,10 +37,13 @@ def main():
     print('\n@@@@@@@@@@@\n')
 
     cotp_atmt = COTP_Automaton(is_server=False,
-                               dmac='11:22:33:44:55:66', smac='11:22:33:44:55:66',
-                               dref=0, sref=0)
-    cotp_atmt.run()
+                               dmac='11:22:33:44:55:66', smac='11:22:33:44:55:99',
+                               dref=0, sref=0x01)
+    cotp_atmt.runbg()
+    time.sleep(3)
+    cotp_atmt.send_bytes('abcccc')
 
+    time.sleep(99999)
     pass
 
 
