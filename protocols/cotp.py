@@ -2,7 +2,7 @@ from scapy.packet import Packet, bind_layers, Raw
 from scapy.fields import *
 from scapy.compat import chb
 from scapy.layers.l2 import Dot3, LLC
-from utils.dissect_helper import *
+from utils.utils import *
 import logging as log
 
 MIN_PKT_LENGTH = 60

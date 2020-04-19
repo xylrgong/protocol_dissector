@@ -1,5 +1,16 @@
 
 
+COTP_TIMEOUT = 15  # 单位： 秒
+
+COTP_ERR_CODE = {
+    100: 'Invalid dst mac',
+    101: 'Invalid src mac',
+    102: 'Invalid dst ref',
+    103: 'Invalid src ref',
+    200: 'Timeout'
+}
+
+
 class COTP_Connection(object):
     def __init__(self, dmac='00:00:00:00:00:00', smac='00:00:00:00:00:00', dref=0x00, sref=0x00):
         self.dmac = dmac,

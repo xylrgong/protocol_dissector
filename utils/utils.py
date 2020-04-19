@@ -1,5 +1,6 @@
 from scapy.layers.l2 import Dot3, LLC
 from protocols.cotp import *
+import re
 
 
 def to8byte(s):
@@ -16,3 +17,6 @@ def lengthof_fields_desc(fields_desc=[]):
         length += fields_desc[i].sz
     return length
 
+
+def is_mac(m):
+    return re.match('^([A-Fa-f0-9]{2}:){5}[A-Fa-f0-9]{2}$', m) is not None
