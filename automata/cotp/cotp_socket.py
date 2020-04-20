@@ -33,6 +33,10 @@ class COTPSocket(object):
         self._atmt.is_server = False
         self._atmt.runbg()
 
+    # 断开连接，异步函数
+    def disconnect(self):
+        self._atmt.disconnect()
+
     # 发送数据，阻塞式接口
     def send_data(self, buf):
         self._atmt.send_bytes(buf)

@@ -80,6 +80,26 @@ VP_PART = (
 )
 
 
+# COTP disconnect cause
+COTP_CAUSE = {
+    0x00: '未说明的原因',
+    0x01: 'TSAP拥挤',
+    0x02: '会话实体未连到 TSAP',
+    0x03: '地址不明',
+    0x80: '常规拆接',
+    0x81: '在连接请求期间远程运输实体拥挤',
+    0x82: '连接协商失效（即建议类未得到支持）',
+    0x83: '对于同一对 NSAP 检测到的重复的源参照符',
+    0x84: '参照符失配',
+    0x85: '协议差错',
+    0x86: '未用',
+    0x87: '参照符溢出',
+    0x88: '在这个网络连接上拒绝连接请求',
+    0x89: '未用',
+    0x8a: '首部或参数长度无效'
+}
+
+
 class COTP_Base(Packet):
     name = "COTP"
     fields_desc = [
@@ -103,7 +123,7 @@ class COTP_DR(Packet):
         XShortField('dref', 0x0000),
         XShortField("sref", 0X0000),
         XShortField("credit", 0x0000),
-        ByteField('cause', 128)
+        ByteField('cause', 0x00)
     ]
 
 

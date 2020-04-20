@@ -13,9 +13,9 @@ COTP_ERR_CODE = {
 
 class COTP_Connection(object):
     def __init__(self, dmac='00:00:00:00:00:00', smac='00:00:00:00:00:00', dref=0x00, sref=0x00):
-        self.dmac = dmac,
-        self.smac = smac,
-        self.dref = dref,
+        self.dmac = dmac
+        self.smac = smac
+        self.dref = dref
         self.sref = sref
 
     def __eq__(self, other):
@@ -23,6 +23,9 @@ class COTP_Connection(object):
                 self.smac == other.smac and \
                 self.dref == other.dref and \
                 self.sref == other.sref
+
+    def __str__(self):
+        return '[COTP CONNECTION] dmac:({}) smac:({}) dref:({}) sref:({})'.format(self.dmac, self.smac, self.dref, self.sref)
 
 
 class COTP_Config(object):

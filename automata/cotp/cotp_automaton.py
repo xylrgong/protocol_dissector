@@ -26,6 +26,12 @@ class COTP_ATMT_Baseclass(Automaton):
                 LLC(dsap=0xfe, ssap=0xfe, ctrl=0x03) /
                 CLNP())
 
+    # 收到的 pkt 是否属于当前 cotp 连接
+    def _is_bound_to_this_connection(self, pkt):
+        conn1 = COTP_Connection(self.dmac, self.smac, self.dref, self.sref)
+        conn2 = COTP_Connection(pkt.src, pkt.dst, pkt.sref, pkt.dref)
+        return conn1 == conn2
+
 
 class COTP_Automaton(COTP_ATMT_Baseclass):
     def __init__(self, *args, **kwargs):
@@ -35,10 +41,12 @@ class COTP_Automaton(COTP_ATMT_Baseclass):
         self.credit = 0
         self.errno = 0
         self.is_connected = False
+        self.is_closing = False
         self._callback_connected = None
         self._callback_disconnected = None
         self._callback_error = None
         self._callback_recv = None
+        self._disconnect_atmt = None
 
     # 用法： 参考scapy文档 4.2.4
     def parse_args(self, **kwargs):
@@ -60,6 +68,16 @@ class COTP_Automaton(COTP_ATMT_Baseclass):
                              credit=self.credit, iface=self.iface, data=buf)
         send_job.run()
         self.my_tpdunr = send_job.my_tpdunr
+
+    def disconnect(self):
+        if not self.is_connected:
+            return
+        if self._disconnect_atmt is None:
+            self._disconnect_atmt = COTP_Disconnect(callback_disconnected=self._callback_disconnected,
+                                                    dmac=self.dmac, smac=self.smac, dref=self.dref, sref=self.sref,
+                                                    credit=self.credit, cause=0x80, iface=self.iface)
+        self._disconnect_atmt.runbg()
+        self.is_closing = True
 
     # 注册回调
     def regist_callbacks(self,
@@ -193,17 +211,27 @@ class COTP_Automaton(COTP_ATMT_Baseclass):
         self._report_transition(self.CONNECTION_OPEN)
         self.is_connected = True
         self._callback_connected()
+        log.debug('连接已建立')
         log.debug('等待数据包...')
 
     # 转移事件： 接收数据包
     @ATMT.receive_condition(CONNECTION_OPEN)
     def listening(self, pkt):
+        if self.is_closing:
+            # 当拆接自动机以超时方式断开连接后，此分支有可能无法进入，导致主自动机无法结束
+            # TODO: 寻找改进方法
+            raise self.END()
         if COTP_DT in pkt:
             self._recv_dt(pkt)
         elif COTP_CR in pkt:
             self._recv_cr(pkt)
         elif COTP_AK in pkt:
             pass  # AK-TPDU 在 COTP_Send 中处理
+        elif COTP_DR in pkt:
+            if self._is_bound_to_this_connection(pkt):
+                self._recv_dr(pkt)
+                self._callback_disconnected()
+                raise self.END()
         else:
             log.debug('收到忽略的数据包：{}'.format(hexstr(pkt, onlyhex=1)))
 
@@ -250,6 +278,15 @@ class COTP_Automaton(COTP_ATMT_Baseclass):
         log.debug('收到 CR-TPDU：{}'.format(hexstr(pkt, onlyhex=1)))
         if pkt.sref == self.dref and pkt.dst == self.smac and pkt.src == self.dmac:
             self.send_cc()
+
+    # 收到 DR-TPDU
+    def _recv_dr(self, pkt):
+        log.debug("收到 DR-TPDU：{}".format(hexstr(pkt, onlyhex=1)))
+        log.debug("cause: {}".format(COTP_CAUSE.get(pkt.cause, COTP_CAUSE[0])))
+        dc = self._l2_packet() / \
+             COTP(pdu_name='DC_TPDU', dref=self.dref, sref=self.sref)
+        self.send(dc)
+        log.debug("发送 DC-TPDU：{}".format(hexstr(dc, onlyhex=1)))
 
 
 # COTP发送数据包自动机
@@ -307,3 +344,67 @@ class COTP_Send(COTP_ATMT_Baseclass):
     def _recv_ak(self, pkt):
         log.debug('收到 AK-TPDU：{}'.format(hexstr(pkt, onlyhex=1)))
         self.my_tpdunr = pkt.tpdunr
+
+
+# COTP拆接自动机
+class COTP_Disconnect(COTP_ATMT_Baseclass):
+    def __init__(self, callback_disconnected, *args, **kwargs):
+        COTP_ATMT_Baseclass.__init__(self, *args, **kwargs)
+        self.errno = 0
+        self._callback_disconnected = callback_disconnected
+
+    # 用法： 参考scapy文档 4.2.4
+    def parse_args(self, **kwargs):
+        self.iface = kwargs.pop('iface', '')
+        self.dmac = kwargs.pop('dmac', '00:00:00:00:00:00')
+        self.smac = kwargs.pop('smac', '00:00:00:00:00:00')
+        self.dref = kwargs.pop('dref', 0x0000)
+        self.sref = kwargs.pop('sref', 0x0000)
+        self.credit = kwargs.pop('credit', 0)
+        self.cause = kwargs.pop('cause', 0)
+        Automaton.parse_args(self, iface=self.iface, **kwargs)
+
+    # 状态： 初始状态，发送 DR-TPDU
+    @ATMT.state(initial=1)
+    def BEGIN(self):
+        self._send_dr()
+        raise self.WAIT_FOR_DC()
+
+    # 状态： 等待 DC-TPDU
+    @ATMT.state()
+    def WAIT_FOR_DC(self):
+        pass
+
+    # 转移事件： 等待 DC-TPDU
+    @ATMT.receive_condition(WAIT_FOR_DC)
+    def waiting_for_dc(self, pkt):
+        if COTP_DC in pkt:
+            log.debug("收到 DC-TPDU：{}".format(hexstr(pkt, onlyhex=1)))
+            if self._is_bound_to_this_connection(pkt):
+                raise self.END()
+        elif COTP_DR in pkt:
+            log.debug("收到 DR-TPDU：{}".format(hexstr(pkt, onlyhex=1)))
+            log.debug("cause: {}".format(COTP_CAUSE.get(pkt.cause, COTP_CAUSE[0])))
+            if self._is_bound_to_this_connection(pkt):
+                raise self.END()
+        else:
+            log.debug('拆接期间收到忽略的数据包：{}'.format(hexstr(pkt, onlyhex=1)))
+
+    # 转移事件： 等待超时
+    @ATMT.timeout(WAIT_FOR_DC, COTP_TIMEOUT)
+    def waiting_timeout_dc(self):
+        raise self.END()
+
+    # 状态： 结束
+    @ATMT.state(final=1)
+    def END(self):
+        self._callback_disconnected()
+        log.debug('连接已断开')
+        pass
+
+    def _send_dr(self):
+        dr = self._l2_packet() / \
+             COTP(pdu_name='DR_TPDU', dref=self.dref, sref=self.sref, credit=self.credit, cause=self.cause)
+        self.send(dr)
+        log.debug("发送 DR-TPDU：{}".format(hexstr(dr, onlyhex=1)))
+
