@@ -4,13 +4,17 @@ from scapy.data import *
 from scapy.utils import *
 from protocols.cotp import *
 from automata.cotp.cotp_config import *
-import logging as log
+from config import log
 
 
 class COTP_ATMT_Baseclass(Automaton):
     # __init__不是 Automaton 的典型初始化函数， 使用 parse_args 代替
     def __init__(self, *args, **kwargs):
         Automaton.__init__(self, ll=conf.L2socket, *args, **kwargs)  # 需要使用 L2pcapSocket
+
+    # 用法： 参考scapy文档 4.2.4
+    def parse_args(self, **kwargs):
+        Automaton.parse_args(self, debug=0, **kwargs)  # 根据本地环境修改 iface
 
     # 用法： 参考scapy文档 4.2.4
     def master_filter(self, pkt):
@@ -57,7 +61,7 @@ class COTP_Automaton(COTP_ATMT_Baseclass):
         self.smac = kwargs.pop('smac', '00:00:00:00:00:00')
         self.dref = kwargs.pop('dref', 0x0000)
         self.sref = kwargs.pop('sref', 0x0000)
-        Automaton.parse_args(self, iface=self.iface, **kwargs)  # 根据本地环境修改 iface
+        COTP_ATMT_Baseclass.parse_args(self, iface=self.iface, **kwargs)  # 根据本地环境修改 iface
 
     # 发送数据，阻塞式接口
     def send_bytes(self, buf):
@@ -94,6 +98,7 @@ class COTP_Automaton(COTP_ATMT_Baseclass):
     @ATMT.state(initial=1)
     def BEGIN(self):
         self._report_transition(self.BEGIN)
+        print(dir(self))
         # 验证参数
         if self.sref == 0x00:
             self.errno = 103
@@ -304,7 +309,7 @@ class COTP_Send(COTP_ATMT_Baseclass):
         self.my_tpdunr = kwargs.pop('my_tpdunr', 0)
         self.credit = kwargs.pop('credit', 0)
         self.data = kwargs.pop('data', b'')
-        Automaton.parse_args(self, iface=self.iface, **kwargs)  # 根据本地环境修改 iface
+        COTP_ATMT_Baseclass.parse_args(self, iface=self.iface, **kwargs)  # 根据本地环境修改 iface
 
     # 状态： 发送 DT-TPDU
     @ATMT.state(initial=1)
@@ -362,7 +367,7 @@ class COTP_Disconnect(COTP_ATMT_Baseclass):
         self.sref = kwargs.pop('sref', 0x0000)
         self.credit = kwargs.pop('credit', 0)
         self.cause = kwargs.pop('cause', 0)
-        Automaton.parse_args(self, iface=self.iface, **kwargs)
+        COTP_ATMT_Baseclass.parse_args(self, iface=self.iface, **kwargs)
 
     # 状态： 初始状态，发送 DR-TPDU
     @ATMT.state(initial=1)
