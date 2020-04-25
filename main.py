@@ -10,8 +10,10 @@ from tests.test_atmt import *
 
 
 def main():
-    atmt = TestATMT()
-    atmt.run()
+    atmt = generate_atmt([(s('BEGIN', initial=1) >> s('TMP')) + cond(timeout=1),
+                          (s('TMP') >> s('TMP2')) + cond(lambda: True),
+                          (s('TMP2') >> s('END', final=1)) + cond(timeout=2)])
+    atmt.runbg()
     time.sleep(99999)
 
     skt = COTPSocket(dmac='11:22:33:44:55:66', smac='11:22:33:44:55:99', sref=0x01,

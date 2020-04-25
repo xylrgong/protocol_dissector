@@ -108,7 +108,8 @@ class BaseAutomaton(Automaton):
 
     def __new__(cls):
         cls = super(Automaton, cls).__new__(cls)
-        cls.atmt = {}
+        if not hasattr(cls, 'trans'):
+            cls.trans = []
         cls.construct()
         cls._initialize()
 
@@ -171,7 +172,7 @@ class BaseAutomaton(Automaton):
         Automaton.__init__(self, *args, **kwargs)
 
     def _initialize(self):
-        for atmt_state in self.atmt.values():
+        for atmt_state in self.trans:
             s1 = atmt_state.state_function(self)
             s2 = atmt_state.next.state_function(self)
             c = atmt_state.cond.condition_function(s1, s2, self)
@@ -188,7 +189,11 @@ class BaseAutomaton(Automaton):
 
 
 def s(func, initial=0, final=0, error=0):
-    assert func.__name__ != '<lambda>'
+    assert (callable(func) and func.__name__ != '<lambda>') or isinstance(func, str)
+    if isinstance(func, str):
+        def f(): pass
+        f.__name__ = func
+        func = f
     return BaseAutomaton.ATMTState(func, initial, final, error)
 
 
@@ -202,5 +207,11 @@ def cond(func=None, timeout=0, recv_pkt=False, prio=0):
 
 
 def action(func, prio=0):
-    assert func.__name__ != '<lambda>'
+    assert callable(func) and func.__name__ != '<lambda>'
     return BaseAutomaton.ATMTAction(func, prio)
+
+
+def generate_atmt(transitions=[]):
+    atmt_def = type('MyATMT', (BaseAutomaton, ), {})
+    atmt_def.trans = transitions
+    return atmt_def()

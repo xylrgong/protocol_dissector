@@ -18,6 +18,6 @@ class TestATMT(BaseAutomaton):
         pass
 
     def construct(self):
-        self.atmt['t1'] = (s(self.BEGIN, initial=1) >> s(self.TMP)) + cond(timeout=1)
-        self.atmt['t2'] = (s(self.TMP) >> s(self.TMP2)) + cond(lambda: True)
-        self.atmt['t3'] = (s(self.TMP2) >> s(self.END, final=1)) + cond(timeout=2)
+        self.trans = [(s(self.BEGIN, initial=1) >> s(self.TMP)) + cond(timeout=1),
+                      (s(self.TMP) >> s(self.TMP2)) + cond(lambda: True),
+                      (s(self.TMP2) >> s(self.END, final=1)) + cond(timeout=2)]
