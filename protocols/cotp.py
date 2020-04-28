@@ -51,7 +51,7 @@ TPDU_TYPE = (
         "ER_TPDU": 0x70,
         "DR_TPDU": 0x80,
         "DC_TPDU": 0xc0,
-        "CC_TPDU": 0xd0,
+        "CC_TPDU": 0xd1,
         "CR_TPDU": 0xe8,
         "DT_TPDU": 0xf0,
         None:      0x00
@@ -179,7 +179,7 @@ bind_layers(CLNP, COTP_Base)
 bind_layers(COTP_Base, COTP_AK, pdutype=0x60)
 bind_layers(COTP_Base, COTP_DR, pdutype=0x80)
 bind_layers(COTP_Base, COTP_DC, pdutype=0xc0)
-bind_layers(COTP_Base, COTP_CC, pdutype=0xd0)
+bind_layers(COTP_Base, COTP_CC, pdutype=0xd1)
 bind_layers(COTP_Base, COTP_CR, pdutype=0xe8)
 bind_layers(COTP_Base, COTP_DT, pdutype=0xf0)
 
@@ -199,7 +199,7 @@ def COTP(pdu_name=None, params=[], **kwargs):
         cotp_pkt = cotp_pkt / COTP_DR(**kwargs)
     elif pdu_code == 0xc0:  # DC
         cotp_pkt = cotp_pkt / COTP_DC(**kwargs)
-    elif pdu_code == 0xd0:  # CC
+    elif pdu_code == 0xd1:  # CC
         cotp_pkt = cotp_pkt / COTP_CC(**kwargs)
     elif pdu_code == 0xe8:  # CR
         cotp_pkt = cotp_pkt / COTP_CR(**kwargs)

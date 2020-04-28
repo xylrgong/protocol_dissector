@@ -1,6 +1,6 @@
 from scapy.automaton import *
 from scapy.automaton import _ATMT_to_supersocket
-from config import log
+from config import *
 import scapy.modules.six as six
 
 
@@ -21,7 +21,7 @@ class BaseAutomaton(Automaton):
             self.action = None
 
         def state_function(self, obj):
-            @ATMT.state(initial=self._initial, final=self._final, error=self._error)
+            @ATMT.state(initial=self._initial, final=self._final, error=0)
             def f(obj):
                 log.debug('状态转移：{}'.format(self.attr_name))
                 self._func()
@@ -94,7 +94,7 @@ class BaseAutomaton(Automaton):
         def __init__(self, func, prio=0):
             self._func = func
             self._prio = prio
-            self.attr_name = 'action_{}'.format(func.__name__)
+            self.attr_name = 'action_{}'.format(self._func.__name__)
 
         def action_function(self, condition, obj):
             @ATMT.action(condition, self._prio)
@@ -106,7 +106,7 @@ class BaseAutomaton(Automaton):
             f.__func__ = f
             return f
 
-    def __new__(cls):
+    def __new__(cls, *args, **kwargs):
         cls = super(Automaton, cls).__new__(cls)
         if not hasattr(cls, 'trans'):
             cls.trans = []
@@ -169,13 +169,16 @@ class BaseAutomaton(Automaton):
         return cls
 
     def __init__(self, *args, **kwargs):
-        Automaton.__init__(self, *args, **kwargs)
+        Automaton.__init__(self, ll=conf.L2socket, *args, **kwargs)
 
     def _initialize(self):
         for atmt_state in self.trans:
             s1 = atmt_state.state_function(self)
             s2 = atmt_state.next.state_function(self)
+            if not atmt_state.cond:
+                atmt_state.cond = cond()
             c = atmt_state.cond.condition_function(s1, s2, self)
+
             if not hasattr(self, atmt_state.attr_name):
                 setattr(self, atmt_state.attr_name, s1)
             if not hasattr(self, atmt_state.next.attr_name):

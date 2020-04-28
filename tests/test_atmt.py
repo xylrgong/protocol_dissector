@@ -21,3 +21,6 @@ class TestATMT(BaseAutomaton):
         self.trans = [(s(self.BEGIN, initial=1) >> s(self.TMP)) + cond(timeout=1),
                       (s(self.TMP) >> s(self.TMP2)) + cond(lambda: True),
                       (s(self.TMP2) >> s(self.END, final=1)) + cond(timeout=2)]
+
+    def parse_args(self, **kwargs):
+        Automaton.parse_args(self, debug=5, **kwargs)  # 根据本地环境修改 iface

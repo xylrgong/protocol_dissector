@@ -7,8 +7,20 @@ COTP_ERR_CODE = {
     101: 'Invalid src mac',
     102: 'Invalid dst ref',
     103: 'Invalid src ref',
-    200: 'Timeout'
+    200: 'Timeout',
+    201: 'Connection closed'
 }
+
+
+class COTP_Params(object):
+    def __init__(self):
+        self.iface = ''
+        self.is_passive = False
+        self.conn = None
+        self.your_tpdunr = 0
+        self.my_tpdunr = 0
+        self.credit = 0
+        self.cause = 0
 
 
 class COTP_Connection(object):

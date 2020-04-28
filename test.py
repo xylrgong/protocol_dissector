@@ -9,8 +9,10 @@ from config import *
 def main():
     skt = COTPSocket(dmac='11:22:33:44:55:99', smac='11:22:33:44:55:66', sref=0x0c01,
                      iface='Killer E2400 Gigabit Ethernet Controller #2')
-    skt.listen()
+    skt.accept()
 
+    time.sleep(3)
+    print(skt.recv_data())
     time.sleep(99999)
 
     pass

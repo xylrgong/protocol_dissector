@@ -6,6 +6,10 @@ from protocols.cotp import *
 from automata.cotp.cotp_config import *
 from config import log
 
+###################
+#  这个文件已弃用  #
+###################
+
 
 class COTP_ATMT_Baseclass(Automaton):
     # __init__不是 Automaton 的典型初始化函数， 使用 parse_args 代替
@@ -98,7 +102,6 @@ class COTP_Automaton(COTP_ATMT_Baseclass):
     @ATMT.state(initial=1)
     def BEGIN(self):
         self._report_transition(self.BEGIN)
-        print(dir(self))
         # 验证参数
         if self.sref == 0x00:
             self.errno = 103
@@ -244,6 +247,7 @@ class COTP_Automaton(COTP_ATMT_Baseclass):
     @ATMT.state(error=1)
     def ERROR_TIMEOUT(self):
         self._report_transition(self.ERROR_TIMEOUT)
+        self.errno = 200
         raise self.END()
 
     # 状态： 发送错误
