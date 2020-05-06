@@ -4,6 +4,37 @@ from config import *
 import scapy.modules.six as six
 
 
+""" 
+用法简介：
+BaseAutomaton继承自 Scapy 的 Automaton，提供了与 Scapy 自动机略有不同的使用方式
+实现自定义的自动机时，首先需要子类化 BaseAutomaton，并在子类中重载 construct 方法
+contruct 方法内需要为 self.trans 属性赋值
+self.trans 是一个列表，其中记录了状态转移与对应的转移条件和转移函数
+
+contruct 的一个示例：
+    def contruct(self):
+        self.trans = [
+            (s('起始状态') >> s('状态1')) + cond(lambda: True) + action(self.action1)
+            (s('状态1') >> s('状态2')) + cond(self.condition1) + action(self.action2)
+            (s('状态2') >> s('结束状态')) + cond(self.condition2) + action(self.action3)
+        ]
+其中，描述状态时的固定形式为 (s() >> s())，最外层的圆括号是必须的
+s() 函数可以接受字符串值，用以标识一个状态名，也可以接受一个状态函数
+cond() 函数接受一个函数对象，作为转移条件，条件函数必须返回一个布尔值
+action() 函数接受一个函数对象，作为转移函数，在发生对应的状态转移后转移函数会被调用
+
+除了子类化 BaseAutomaton 方式外，generate_atmt(transitions=[]) 函数可以直接返回 BaseAutomaton 的实例对象
+其中 transitions 参数的形式与 self.trans 相同
+
+Scapy的 Automaton 提供了其它 2 个可重载的函数，分别是：
+    parse_args(self, **kwargs) 
+    master_filter(self, pkt)
+parse_args 用于在子类进行参数解析，需要注意的是子类完成解析后仍需要调用父类的 parse_args
+任何未处理的参数将传递给 Automaton 的原生 socket 作为其初始参数的一部分，如果不是明确知道其含义，一般会导致报错
+master_filter 用于当前自动机的全局数据包过滤，函数需要返回布尔值
+"""
+
+
 class BaseAutomaton(Automaton):
     # 需要在子类中重载
     def construct(self):
@@ -171,6 +202,7 @@ class BaseAutomaton(Automaton):
     def __init__(self, *args, **kwargs):
         Automaton.__init__(self, ll=conf.L2socket, *args, **kwargs)
 
+    # 将 self.trans中的状态转移重写为 Automaton的状态函数、条件函数和行为函数
     def _initialize(self):
         for atmt_state in self.trans:
             s1 = atmt_state.state_function(self)
@@ -191,6 +223,10 @@ class BaseAutomaton(Automaton):
                     setattr(self, atmt_state.action.attr_name, a)
 
 
+# func需要是一个非 lambda的可调用对象（表示状态函数），或字符串（表示状态名）
+# initial=1时表示此状态是初始状态
+# final=1时表示此状态是结束状态
+# error=1时表示此状态是错误状态
 def s(func, initial=0, final=0, error=0):
     assert (callable(func) and func.__name__ != '<lambda>') or isinstance(func, str)
     if isinstance(func, str):
@@ -200,6 +236,11 @@ def s(func, initial=0, final=0, error=0):
     return BaseAutomaton.ATMTState(func, initial, final, error)
 
 
+# func需要是一个可调用对象（表示条件函数），func必须返回一个布尔值，当 func判断为真时，自动机进行状态转移
+# timeout表示此条件是一个超时条件，在 timeout秒后，条件函数 func被调用
+# recv_pkt=True表示此条件需要根据接收的数据包作判断
+#     当使用 recv_pkt标志时，func需要声明为这样的形式： def func(self, pkt)
+# prio表示条件函数调用的优先级，0表示最高优先级
 def cond(func=None, timeout=0, recv_pkt=False, prio=0):
     cond_type = 0
     if recv_pkt:
@@ -209,11 +250,12 @@ def cond(func=None, timeout=0, recv_pkt=False, prio=0):
     return BaseAutomaton.ATMTCondition(func, cond_type, timeout, prio)
 
 
+# func需要是一个非 lambda的可调用对象（表示行为函数），在发生状态转移后，进入下一个状态函数前，func会被调用
 def action(func, prio=0):
     assert callable(func) and func.__name__ != '<lambda>'
     return BaseAutomaton.ATMTAction(func, prio)
 
-
+# 返回一个 BaseAutomaton的实例对象，使用 transitions参数描述自动机定义
 def generate_atmt(transitions=[]):
     atmt_def = type('MyATMT', (BaseAutomaton, ), {})
     atmt_def.trans = transitions
