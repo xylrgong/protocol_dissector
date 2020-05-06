@@ -1,6 +1,7 @@
 from automata.cotp.cotp_atmt import *
 from automata.cotp.cotp_config import *
 from collections import deque
+import threading
 from utils.utils import *
 from config import *
 
@@ -21,12 +22,22 @@ class COTPSocket(object):
     # 接收数据包，读取最多 size 个数的数据包
     def recv_data(self, size=0):
         result = []
-        i = 0
-        if size == 0:
+        if size <= 0:
             size = len(self._recv_queue)
-        while len(self._recv_queue) > 0 and i < size:
+        while len(self._recv_queue) > 0 and len(result) < size:
             result.append(self._recv_queue.popleft())
-            i += 1
+        return result
+
+    # 接收数据包，阻塞式接口，在接收了 size 个数的数据包前一直等待
+    def recv_data_block(self, size=0):
+        result = []
+        if size <= 0:
+            return self.recv_data(size)
+        while len(result) < size:
+            if len(self._recv_queue) == 0:
+                self._signal.clear()
+                self._signal.wait()
+            result.append(self._recv_queue.popleft())
         return result
 
     # 等待主机连接，阻塞式接口
@@ -41,6 +52,7 @@ class COTPSocket(object):
         self._atmt_connect = None
         self._atmt_recv = None
         self._recv_queue = deque()
+        self._signal = threading.Event()
 
     def _clear(self):
         self.is_connected = False
@@ -65,9 +77,10 @@ class COTPSocket(object):
         return errno
 
     def _do_disconnect(self):
-        self._params.cause = 0x80
-        atmt_close = COTP_ATMT_Disconnect(params=self._params)
-        atmt_close.runbg()
+        if self.is_connected:
+            self._params.cause = 0x80
+            atmt_close = COTP_ATMT_Disconnect(params=self._params)
+            atmt_close.runbg()
 
     def _do_send(self, buf):
         if not self.is_connected:
@@ -87,6 +100,7 @@ class COTPSocket(object):
 
     def _recv_pkt(self, pkt):
         self._recv_queue.append(pkt)
+        self._signal.set()
 
     def _disconnected(self):
         self._clear()

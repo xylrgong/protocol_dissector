@@ -7,12 +7,11 @@ from config import *
 
 
 def main():
-    skt = COTPSocket(dmac='11:22:33:44:55:99', smac='11:22:33:44:55:66', sref=0x0c01,
-                     iface='Killer E2400 Gigabit Ethernet Controller #2')
+    skt = COTPSocket(dmac='00:30:6e:0c:87:4e', smac='08:00:06:1a:11:11', sref=0x0c01,
+                     iface='本地连接* 1')
     skt.accept()
 
-    time.sleep(3)
-    print(skt.recv_data())
+    print(skt.recv_data_block(2))
     time.sleep(99999)
 
     pass

@@ -1,4 +1,4 @@
-from scapy.packet import Packet, bind_layers, Raw
+from scapy.packet import Packet, bind_layers, Raw, Padding
 from scapy.fields import *
 from scapy.compat import chb
 from scapy.layers.l2 import Dot3, LLC
@@ -8,18 +8,18 @@ import logging as log
 MIN_PKT_LENGTH = 60
 
 
+class COTP_Dot3(Dot3):
+    def build_padding(self):
+        padding_len = MIN_PKT_LENGTH - 14 - len(self.payload)
+        return b'\x00' * padding_len
+
+
 # CLNP is normally not implemented
 class CLNP(Packet):
     name = "CLNP"
     fields_desc = [
         XByteField('Inactive subset', 0x00)
     ]
-
-    def post_build(self, pkt, pay):
-        if len(pay) < MIN_PKT_LENGTH - 18:
-            padding_len = MIN_PKT_LENGTH - 18 - len(pay)
-            pay += b'\x00' * padding_len
-        return pkt + pay
 
 
 ##################################################
@@ -122,7 +122,6 @@ class COTP_DR(Packet):
     fields_desc = [
         XShortField('dref', 0x0000),
         XShortField("sref", 0X0000),
-        XShortField("credit", 0x0000),
         ByteField('cause', 0x00)
     ]
 

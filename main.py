@@ -10,11 +10,12 @@ from tests.test_atmt import *
 
 
 def main():
-    skt = COTPSocket(dmac='11:22:33:44:55:66', smac='11:22:33:44:55:99', sref=0x01,
-                     iface='Killer E2400 Gigabit Ethernet Controller #2')
+    skt = COTPSocket(dmac='08:00:06:1a:11:11', smac='00:30:6e:0c:87:4e', sref=0x01,
+                     iface='本地连接* 1')
     skt.connect()
     time.sleep(1)
     skt.send_data('abccc')
+    time.sleep(2)
     skt.send_data('abccc333')
     time.sleep(3)
     skt.disconnect()

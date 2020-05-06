@@ -24,7 +24,7 @@ class COTP_ATMT_Baseclass(BaseAutomaton):
 
     # 构造2层数据包
     def _l2_packet(self):
-        return (Dot3(dst=self.params.conn.dmac, src=self.params.conn.smac) /
+        return (COTP_Dot3(dst=self.params.conn.dmac, src=self.params.conn.smac) /
                 LLC(dsap=0xfe, ssap=0xfe, ctrl=0x03) /
                 CLNP())
 
@@ -232,7 +232,7 @@ class COTP_ATMT_Disconnect(COTP_ATMT_Baseclass):
     def _send_dr(self):
         pkt = self._l2_packet() / \
               COTP(pdu_name='DR_TPDU', dref=self.params.conn.dref, sref=self.params.conn.sref,
-                   credit=self.params.credit, cause=self.params.cause)
+                   cause=self.params.cause)
         self._send_and_log(pkt)
 
     def _recv_dc(self, pkt):
