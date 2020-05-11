@@ -15,7 +15,7 @@ def lengthof_fields_desc(fields_desc=[]):
     length = 0
     for i in range(len(fields_desc)):
         length += fields_desc[i].sz
-    return length
+    return int(length)
 
 
 def is_mac(m):

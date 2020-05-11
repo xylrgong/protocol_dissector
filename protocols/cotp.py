@@ -252,21 +252,23 @@ def dissect_cotp(buf):
         log.warning("不完整的COTP数据包，长度：{}".format(len(buf)))
         return
     pkt = Dot3(buf)  # result: Dot3() / LLC() / CLNP() / COTP_Base() / COTP_?() / Raw()
+    padding_len = 0
+    if pkt.haslayer(Padding):
+        padding_len = len(pkt.getlayer(Padding))
 
     if pkt.haslayer(COTP_Base) and pkt.haslayer(Raw):
         layers = pkt.layers()
-        params_len = 0
-        if isinstance(layers[-2], COTP_Base):  # failed to dissect COTP_?()
-            return pkt
-
-        cotp_subset_len = lengthof_fields_desc(layers[-2].fields_desc)
-        params_len = pkt.length + 1 - 2 - cotp_subset_len
-        i = 14 + 3 + 1 + 2 + cotp_subset_len
-        pkt = Dot3(buf[:i])
+        subset_index = layers.index(COTP_Base) + 1  # index of COTP_type
+        cotp_subset_len = lengthof_fields_desc(layers[subset_index].fields_desc)  # length of COTP_type()
+        params_len = pkt.length + 1 - 2 - cotp_subset_len  # cotp_length_field + 1 - cotp_header_length - ...
+        i = 14 + 3 + 1 + 2 + cotp_subset_len  # eth + LLC + CLNP + COTP header + ...
+        pkt = Dot3(buf[:i])  # Dot3() / LLC() / CLNP() / COTP_Base() / COTP_?()
         while params_len > 0:
             param_pkt, dlength = dissect_param(buf, i)
             pkt = pkt / param_pkt
             params_len -= dlength
             i += dlength
-        pkt = pkt / buf[i: ]
+        pkt = pkt / Raw(buf[i: len(buf)-padding_len])
+        if padding_len > 0:
+            pkt = pkt / Padding(buf[len(buf)-padding_len: ])
     return pkt
