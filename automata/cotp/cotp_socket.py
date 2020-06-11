@@ -17,6 +17,7 @@ class COTPSocket(object):
 
     # 发送数据，阻塞式接口
     def send_data(self, buf):
+        assert(isinstance(buf, bytes) or isinstance(buf, str))
         return self._do_send(buf)
 
     # 接收数据包，读取最多 size 个数的数据包

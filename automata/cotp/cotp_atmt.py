@@ -16,6 +16,7 @@ class COTP_ATMT_Baseclass(BaseAutomaton):
     def parse_args(self, **kwargs):
         log.debug("初始化参数...")
         self.params = kwargs.pop('params', None)
+        log.debug("网络接口: " + self.params.iface)
         BaseAutomaton.parse_args(self, debug=0, iface=self.params.iface, **kwargs)  # 根据本机环境修改 iface
 
     # 用法： Automaton进入recveive_condition后, 收到 pkt 时, 会调用此函数, 作为全局数据包过滤
