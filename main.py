@@ -11,7 +11,7 @@ from tests.test_atmt import *
 
 def main():
     skt = COTPSocket(dmac='08:00:06:1a:11:11', smac='00:30:6e:0c:87:4e', sref=0x01,
-                     iface='以太网 2')
+                     iface='WLAN')
     skt.connect()
     time.sleep(1)
     skt.send_data(int.to_bytes(1, 2, 'big'))

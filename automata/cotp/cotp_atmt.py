@@ -4,6 +4,7 @@ from utils.base_automaton import *
 from protocols.cotp import *
 from automata.cotp.cotp_config import *
 from config import *
+import threading
 
 
 # COTP自动机的基类
@@ -11,17 +12,24 @@ class COTP_ATMT_Baseclass(BaseAutomaton):
     def __init__(self, *args, **kwargs):
         BaseAutomaton.__init__(self, *args, **kwargs)
         self.errno = 0
+        self.n_pkt = 0
+        threading.Timer(10, self._traffic_check).start()
 
     # 用法： Automaton初始化时会调用此函数, 以更新参数
     def parse_args(self, **kwargs):
         log.debug("初始化参数...")
         self.params = kwargs.pop('params', None)
-        log.debug("网络接口: " + self.params.iface)
+        log.info("网络接口: " + self.params.iface)
         BaseAutomaton.parse_args(self, debug=0, iface=self.params.iface, **kwargs)  # 根据本机环境修改 iface
 
     # 用法： Automaton进入recveive_condition后, 收到 pkt 时, 会调用此函数, 作为全局数据包过滤
     def master_filter(self, pkt):
+        self.n_pkt += 1
         return COTP_Base in pkt and pkt.src != self.params.conn.smac
+
+    def _traffic_check(self):
+        if self.n_pkt == 0:
+            log.info("网络接口[{}]没有收到任何数据包，请检查 iface 设置，以及 Npcap 是否正常工作".format(self.params.iface))
 
     # 构造2层数据包
     def _l2_packet(self):
