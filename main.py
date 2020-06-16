@@ -16,7 +16,7 @@ def main():
     time.sleep(1)
     skt.send_data(int.to_bytes(1, 2, 'big'))
     time.sleep(2)
-    skt.send_data('abccc333')
+    skt.send_data('abccc333\x00')
     time.sleep(3)
     skt.disconnect()
 

@@ -178,7 +178,8 @@ class COTP_ATMT_Receive(COTP_ATMT_Baseclass):
         return False
 
     def _recv_dt(self, pkt):
-        payload = str(pkt.getlayer(Raw).load, encoding="utf-8").replace('\x00', '')
+        dt_pkt = dissect_cotp(pkt.original)
+        payload = dt_pkt.getlayer(Raw).load
         log.debug('负载：{}'.format(payload))
         self._send_ak()
         self._recv_callback(payload)
