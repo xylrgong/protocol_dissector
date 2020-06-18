@@ -36,14 +36,19 @@ OPCODE = (
         0x04: "Write_Response",  # 写响应
         0x05: "Read_Request",  # 读请求
         0x06: "Read_Response",  # 读响应
-        0x00: "NULL"  # 空操作码
+        0x0f: "NULL",  # 空操作码
+        0x0d: "D_Connect",
+        0x8d: "PD_Connect"
+
     },
     {
         "Write_Request": 0x03,
         "Write_Response": 0x04,
         "Read_Request": 0x05,
         "Read_Response": 0x06,
-        None: 0x00
+        "D_Connect":0x0d,
+        "PD_Connect": 0x8d,
+        None: 0x0f
     }
 )
 
@@ -123,6 +128,7 @@ def H1(opcode_name=None, request_block=[]):
                                                Length_in_words=length_in_words)
         else:
             log.info("不支持的内存类型, 内存名：{0}".format(memory_name))
+    h1_pkt.Length_indicator = len(h1_pkt)
     return h1_pkt
 
 #定义解析h1方法
@@ -153,6 +159,30 @@ def dissect_h1(buf):
                                          Length_in_words=length_in_words)
             i+=8
     pkt = pkt / buf[i:]
+    return pkt
+
+def dissect_h1_ex(buf_last):
+    i=0
+    #if len(buf_last)<6:
+    #    log.warning("不完整的h1数据包，长度：{}".format(len(buf_last)))
+    #    return
+    pkt = H1_Base(Length_indicator=buf_last[2], Block_type=buf_last[3],
+                        Block_length=buf_last[4], Opcode=buf_last[5])
+    i += 6
+    if len(buf_last) >= 8:
+        block_type=buf_last[i]   #即为块类型
+        if block_type in BLOCK_TYPE[0]:
+            block_length=buf_last[i+1]
+            memory_type = buf_last[i+2]
+            memory_block_number = buf_last[i+3]
+            address_within_memory_block = buf_last[i+4:i+4+2]
+            length_in_words = buf_last[i+5:i+5+2]
+            pkt = pkt / H1_Request_Block(Block_type=block_type, Block_length=block_length,
+                                         Memory_type=memory_type, Memory_block_number=memory_block_number,
+                                         Address_within_memory_block=address_within_memory_block,
+                                         Length_in_words=length_in_words)
+            i+=8
+    pkt = pkt / buf_last[i:]
     return pkt
 
 

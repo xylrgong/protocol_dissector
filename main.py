@@ -7,19 +7,25 @@ from automata.cotp.cotp_config import *
 from config import *
 from utils.base_automaton import *
 from tests.test_atmt import *
+from protocols.h1 import *
+from scapy.packet import Packet, bind_layers, Raw, Padding
+from scapy.fields import *
+from automata.s5.s5_socket import *
+from automata.s5.S5_config import *
+from scapy.compat import chb
+from scapy.layers.l2 import Dot3, LLC
+from utils.utils import *
+import logging as log
 
 
 def main():
-    skt = COTPSocket(dmac='08:00:06:1a:11:11', smac='00:30:6e:0c:87:4e', sref=0x01,
-                     iface='WLAN')
-    skt.connect()
+    skt = s5Socket(dmac='08:00:06:1a:11:11', smac='00:30:6e:0c:87:4e', sref=0x01,
+                     iface='以太网')
+    skt.send_command("aa101", "open")
     time.sleep(1)
-    skt.send_data(int.to_bytes(1, 2, 'big'))
+    #skt.send_data(int.to_bytes(20, 2, 'big'))
     time.sleep(2)
-    skt.send_data('abccc333')
     time.sleep(3)
-    skt.disconnect()
-
     time.sleep(99999)
     pass
 
