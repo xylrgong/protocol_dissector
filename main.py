@@ -20,9 +20,9 @@ import logging as log
 
 def main():
     skt = s5Socket(dmac='08:00:06:1a:11:11', smac='00:30:6e:0c:87:4e', sref=0x01,
-                     iface='以太网')
+                     iface='以太网 2')
     skt.send_command("aa101", "open")
-    
+
     print('Sleeping...')
     time.sleep(99999)
     pass

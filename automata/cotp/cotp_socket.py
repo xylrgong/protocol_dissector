@@ -73,6 +73,7 @@ class COTPSocket(object):
         if not errno:
             self.is_connected = True
             self._do_recv()
+            time.sleep(0.1)
         else:
             self._report_error(self._atmt_connect.errno, '连接失败')
         return errno

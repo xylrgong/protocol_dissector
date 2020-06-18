@@ -31,7 +31,7 @@ class S5_ATMT_Baseclass(BaseAutomaton):
 
     def _cotp_connected(self):
         self.cotp_skt = COTPSocket(dmac='08:00:06:1a:11:11', smac='00:30:6e:0c:87:4e', sref=0x01,
-                                   iface='以太网')
+                                   iface='以太网 2')
         if self.cotp_skt.connect():
             return False
         return True
@@ -501,7 +501,7 @@ class S5_ATMT_S5_SERVER(S5_ATMT_Baseclass):
 
     def is_cotp_connected(self):
         self.cotp_skt = COTPSocket(dmac='00:30:6e:0c:87:4e', smac='08:00:06:1a:11:11', sref=0x0c01,
-                                   iface='以太网')
+                                   iface='以太网 2')
         self.cotp_skt._clear()
         if self.cotp_skt.accept():
             return False

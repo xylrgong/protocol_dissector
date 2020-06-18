@@ -95,25 +95,25 @@ class BaseAutomaton(Automaton):
                 BaseAutomaton.ATMTCondition.lambda_no += 1
             self.attr_name = 'cond_{}'.format(self._func.__name__)
 
-        def condition_function(self, state, next_state, obj):
+        def condition_function(self, state, next_state, obj, *args, **kwargs):
             cf = None
             if self._type == 0:
                 @ATMT.condition(state, prio=self._prio)
                 def f(obj):
                     if self._func():
-                        raise next_state(obj)
+                        raise next_state(obj).action_parameters(*args, **kwargs)
                 cf = f
             elif self._type == 1:
                 @ATMT.receive_condition(state, prio=self._prio)
                 def f(obj, pkt):
                     if self._func(pkt):
-                        raise next_state(obj)
+                        raise next_state(obj).action_parameters(*args, **kwargs)
                 cf = f
             elif self._type == 2:
                 @ATMT.timeout(state, self._timeout)
                 def f(obj):
                     if self._func():
-                        raise next_state(obj)
+                        raise next_state(obj).action_parameters(*args, **kwargs)
                 cf = f
             cf.__name__ = self.attr_name
             cf.atmt_condname = self.attr_name
@@ -122,15 +122,17 @@ class BaseAutomaton(Automaton):
             return cf
 
     class ATMTAction(object):
-        def __init__(self, func, prio=0):
+        def __init__(self, func, prio=0, *args, **kwargs):
+            self.args = args
+            self.kwargs = kwargs
             self._func = func
             self._prio = prio
             self.attr_name = 'action_{}'.format(self._func.__name__)
 
         def action_function(self, condition, obj):
             @ATMT.action(condition, self._prio)
-            def f(obj):
-                self._func()
+            def f(obj, *args, **kwargs):
+                self._func(*args, **kwargs)
 
             f.__name__ = self.attr_name
             f.__self__ = obj
@@ -209,7 +211,12 @@ class BaseAutomaton(Automaton):
             s2 = atmt_state.next.state_function(self)
             if not atmt_state.cond:
                 atmt_state.cond = cond()
-            c = atmt_state.cond.condition_function(s1, s2, self)
+            if not atmt_state.action:
+                c = atmt_state.cond.condition_function(s1, s2, self)
+            else:
+                args = atmt_state.action.args
+                kwargs = atmt_state.action.kwargs
+                c = atmt_state.cond.condition_function(s1, s2, self, *args, **kwargs)
 
             if not hasattr(self, atmt_state.attr_name):
                 setattr(self, atmt_state.attr_name, s1)
@@ -251,9 +258,14 @@ def cond(func=None, timeout=0, recv_pkt=False, prio=0):
 
 
 # func需要是一个非 lambda的可调用对象（表示行为函数），在发生状态转移后，进入下一个状态函数前，func会被调用
-def action(func, prio=0):
+# *args, **kwargs是传递给 func 的参数
+# 注意：当 func 需要接收参数时，对应的 condition 的函数名需要是唯一的，这是由于 scapy 通过 condition 向所有绑定到
+#      这个条件的 action 传递参数，当存在重名的 condition 时，condition 的行为取决于最后一次绑定的 action。
+#      匿名函数（lambda）不受影响。
+def action(func, prio=0, *args, **kwargs):
     assert callable(func) and func.__name__ != '<lambda>'
-    return BaseAutomaton.ATMTAction(func, prio)
+    return BaseAutomaton.ATMTAction(func, prio, *args, **kwargs)
+
 
 # 返回一个 BaseAutomaton的实例对象，使用 transitions参数描述自动机定义
 def generate_atmt(transitions=[]):

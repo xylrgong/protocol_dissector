@@ -13,7 +13,7 @@ import binascii
 
 def main():
     skt = s5Socket(dmac='00:30:6e:0c:87:4e', smac='08:00:06:1a:11:11', sref=0x0c01,
-                     iface='以太网')
+                     iface='以太网 2')
     skt.wait_command()
 
     print('Sleeping...')
