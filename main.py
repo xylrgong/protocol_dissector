@@ -25,6 +25,10 @@ def main():
     time.sleep(1)
     #skt.send_data(int.to_bytes(20, 2, 'big'))
     time.sleep(2)
+<<<<<<< HEAD
+=======
+    skt.send_data('abccc333\x00')
+>>>>>>> 8362b7112bc83a56e21d71aec4f27f6dfb9c538c
     time.sleep(3)
     time.sleep(99999)
     pass
