@@ -15,10 +15,9 @@ def main():
     skt = s5Socket(dmac='00:30:6e:0c:87:4e', smac='08:00:06:1a:11:11', sref=0x0c01,
                      iface='以太网')
     skt.wait_command()
+
+    print('Sleeping...')
     time.sleep(99999)
-
-
-
     pass
 #      hexPKTstr = str(binascii.b2a_hex(bytes(*pkt, encoding="utf8")))
 #      hexDWNRstr = hexPKTstr[22: 22 + len]
