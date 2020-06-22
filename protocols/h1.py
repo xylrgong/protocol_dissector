@@ -148,7 +148,7 @@ def dissect_h1(buf):
                         Block_length=buf_last[4], Opcode=buf_last[5])
     i += 6
     if len(buf_last) >= 8:
-        block_type=buf[i]   #即为块类型
+        block_type=buf[i]    #即为块类型
         if block_type in BLOCK_TYPE[0]:
             block_length=buf[i+1]
             memory_type = buf[i+2]
