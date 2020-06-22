@@ -154,7 +154,7 @@ def dissect_h1(buf):
             memory_type = buf[i+2]
             memory_block_number = buf[i+3]
             address_within_memory_block = buf[i+4:i+4+2]
-            length_in_words = buf[i+5:i+5+2]
+            length_in_words = buf[i+6:i+6+2]
             pkt = pkt / H1_Request_Block(Block_type=block_type, Block_length=block_length,
                                          Memory_type=memory_type, Memory_block_number=memory_block_number,
                                          Address_within_memory_block=address_within_memory_block,
