@@ -25,10 +25,13 @@ class S5_SERVER_ATMT_Baseclass(BaseAutomaton):
 
     def send_dwnr(self, dwnr, dwnr2=None, dwnr3=None):
         self.send_pkt(dwnr)
+        print(dwnr)
         if dwnr2:
             self.send_pkt(dwnr2)
+            print(dwnr2)
         if dwnr3:
             self.send_dwnr(dwnr3)
+            print(dwnr3)
 
 
 

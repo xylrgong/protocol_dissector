@@ -21,15 +21,21 @@ import logging as log
 
 
 def main():
-    # skt = s5_client(dmac='08:00:06:1a:11:11', smac='00:30:6e:0c:87:4e', sref=0x01,
-    #                  iface='以太网')
-    # skt.do_valve(valve_name='aa101', op_type='open')
+    skt = s5_client(dmac='08:00:06:1a:11:11', smac='00:30:6e:0c:87:4e', sref=0x01,
+                     iface='以太网')
+    skt.do_valve(valve_name='aa101', op_type='open')
+    skt.do_dis_dconnect()
 
-    skt = COTPSocket(dmac='08:00:06:1a:11:11', smac='00:30:6e:0c:87:4e', sref=0x01,
-                      iface='以太网')
-    skt.connect()
-    pkt = H1(opcode_name='Unknown')
-    skt.send_data(raw(pkt))
+    # skt = COTPSocket(dmac='08:00:06:1a:11:11', smac='00:30:6e:0c:87:4e', sref=0x01,
+    #                   iface='以太网')
+    # skt.connect()
+    # # pkt = H1(opcode_name='Unknown')
+    # # skt.send_data(raw(pkt))
+    # skt.send_data('255352')
+    # time.sleep(2)
+    # skt.disconnect()
+    # skt.connect()
+    # skt.send_data('sfegr3')
     print('Sleeping...')
     time.sleep(99999)
     pass

@@ -13,15 +13,15 @@ import binascii
 
 
 def main():
-    # skt = s5_server(dmac='00:30:6e:0c:87:4e', smac='08:00:06:1a:11:11', sref=0x0c01,
-    #                  iface='以太网')
-    # skt.accept_order()
-    skt = COTPSocket(dmac='00:30:6e:0c:87:4e', smac='08:00:06:1a:11:11', sref=0x0c01,
+    skt = s5_server(dmac='00:30:6e:0c:87:4e', smac='08:00:06:1a:11:11', sref=0x0c01,
                      iface='以太网')
-    skt.accept()
-    pkt = skt.recv_data_block(1)
-    h1_pkt = dissect_h1_ex(*pkt)
-    print(h1_pkt.Opcode)
+    skt.accept_order()
+    # skt = COTPSocket(dmac='00:30:6e:0c:87:4e', smac='08:00:06:1a:11:11', sref=0x0c01,
+    #                  iface='以太网')
+    # skt.accept()
+    # # pkt = skt.recv_data_block(1)
+    # # h1_pkt = dissect_h1_ex(*pkt)
+    # # print(h1_pkt.Opcode)
     time.sleep(99999)
     pass
 #      hexPKTstr = str(binascii.b2a_hex(bytes(*pkt, encoding="utf8")))

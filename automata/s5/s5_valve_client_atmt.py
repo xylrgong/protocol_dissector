@@ -22,8 +22,9 @@ class S5_ATMT_DCONNECT(S5_CLIENT_ATMT_Baseclass):
         ]
 
     def parse_args(self, **kwargs):
-        params = kwargs.pop('params', None)
-        self.cotp_skt = COTPSocket(dmac=params.dmac, smac=params.smac, sref=params.sref, iface=params.iface)
+        # params = kwargs.pop('params', None)
+        # self.cotp_skt = COTPSocket(dmac=params.dmac, smac=params.smac, sref=params.sref, iface=params.iface)
+        self.cotp_skt = kwargs.pop('cotp_skt', None)
         S5_CLIENT_ATMT_Baseclass.parse_args(self, **kwargs)
 
     def _cotp_connected(self):
@@ -58,17 +59,14 @@ class S5_VALVE_OPERATE_ATMT(S5_CLIENT_ATMT_Baseclass):
             (s('WAIT_FOR_3_') >> s('WAIT_FOR_4611_')) + cond(self.get_cond(3, 'valve_is_3_')),
             (s('WAIT_FOR_4611_') >> s('WAIT_FOR_4611__')) + cond(self.get_cond(4611, 'valve_is_4611_')) + action(
                 self.send_dwnr, dwnr='772'),
-            (s('WAIT_FOR_4611__') >> s('WAIT_FOR_RESET')) + cond(self.get_cond(4611, 'valve_is_4611__')) + action(
+            (s('WAIT_FOR_4611__') >> s('END', final=1)) + cond(self.get_cond(4611, 'valve_is_4611__')) + action(
                 self.wait_for_operate),
-            (s('WAIT_FOR_RESET') >> s('VALVE_BEGIN')) + cond(lambda: not self._is_reset) + action(self.set_reset_flag),
-            (s('WAIT_FOR_RESET') >> s('END', final=1)) + cond(lambda: self._is_reset, prio=1)
         ]
 
     def parse_args(self, **kwargs):
         self._valve_name = kwargs.pop('valve_name', '')
         self._op_type = self._valve_name + kwargs.pop('op_type', '')
-        self._is_reset = False
-        # self._cotp_conn = kwargs.pop('valve_name', '')
+        self.cotp_skt = kwargs.pop('cotp_skt', None)
         S5_CLIENT_ATMT_Baseclass.parse_args(self, **kwargs)
 
     # 2052的负载指定了阀门名称
@@ -85,20 +83,20 @@ class S5_VALVE_OPERATE_ATMT(S5_CLIENT_ATMT_Baseclass):
 
     def wait_for_operate(self):
         print('waiting for oprating...')
-        time.sleep(5)
+        time.sleep(1)
+        print(self._op_type+'_complete')
 
-    def set_reset_flag(self):
-        self._is_reset = True
-
-class S5_ATMT_Disconnect(S5_CLIENT_ATMT_Baseclass):
-    def construct(self):
-        self.trans = [
-            (s('DISCONN_BEGIN', initial=1) >> s('WAIT_FOR_DISCONN')) + action(self._send_dr),
-            (s('WAIT_FOR_DISCONN') >> s('END', final=1))
-        ]
-
-    def _send_dr(self):
-        self.cotp_skt.disconnect()
-        self.cotp_skt = None
-
+# class S5_ATMT_Disconnect(S5_CLIENT_ATMT_Baseclass):
+#     def construct(self):
+#         self.trans = [
+#             (s('DISCONN_BEGIN', initial=1) >> s('WAIT_FOR_DISCONN')) + action(self._do_disconnect),
+#             (s('WAIT_FOR_DISCONN') >> s('END', final=1))
+#         ]
+#
+#     def parse_args(self, **kwargs):
+#         self.cotp_skt = kwargs.pop('cotp_skt', None)
+#         S5_CLIENT_ATMT_Baseclass.parse_args(self, **kwargs)
+#
+#     def _do_disconnect(self):
+#         self.cotp_skt.disconnect()
 

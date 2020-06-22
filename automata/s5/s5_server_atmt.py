@@ -17,15 +17,15 @@ class S5_SERVER_ATMT(S5_SERVER_ATMT_Baseclass):
             (s('AA_WAIT_FOR_4') >> s('AA_WAIT_FOR_6148')) + cond(self.valve_is_4) + action(self.send_dwnr, dwnr='4611'),
             (s('AA_WAIT_FOR_6148') >> s('AA_WAIT_FOR_772')) + cond(self.get_cond(6148, 'valve_is_6148')) + action(self.send_dwnr, dwnr='3', dwnr2='4611'),
             (s('AA_WAIT_FOR_772') >> s('COMMAND_DONE')) + cond(self.get_cond(772, 'valve_is_772')) + action(self.send_dwnr, dwnr='4611'),
-            (s('COMMAND_DONE') >> s('AA_WAIT_FOR_32771')) +cond(lambda :self.get_cond(5124, 'vale_is_5124_'), prio=1) + action(self.send_dwnr, dwnr='4099'),
+            (s('COMMAND_DONE') >> s('AA_WAIT_FOR_32771')) +cond(self.get_cond(5124, 'vale_is_5124_'), prio=1) + action(self.send_dwnr, dwnr='4099'),
             (s('COMMAND_DONE') >> s('VALVE_END', final=1)) + cond(self.already_disconnected),
         ]
     def parse_args(self, **kwargs):
         self._is_stopped = kwargs.pop('_is_stopped', False)
         self._equips = None
         self._operation = None
-        params = kwargs.pop('params', None)
-        self.server_cotp_skt = COTPSocket(dmac=params.dmac, smac=params.smac, sref=params.sref, iface=params.iface)
+        # params = kwargs.pop('params', None)
+        self.server_cotp_skt = kwargs.pop('sever_cotp_skt', None)
         S5_SERVER_ATMT_Baseclass.parse_args(self, **kwargs)
 
     def is_cotp_connected(self):
@@ -44,7 +44,7 @@ class S5_SERVER_ATMT(S5_SERVER_ATMT_Baseclass):
         return False
 
     def valve_is_2052(self):
-        buf = self.cotp_skt.recv_data_block(1)
+        buf = self.server_cotp_skt.recv_data_block(1)
         h1_pkt = dissect_h1_ex(*buf)
         if int.from_bytes(h1_pkt.Address_within_memory_block, byteorder='big') == 2052:
             payload = h1_pkt.getlayer(Raw).load
@@ -53,11 +53,11 @@ class S5_SERVER_ATMT(S5_SERVER_ATMT_Baseclass):
         return False
 
     def valve_is_4(self):
-        buf = self.cotp_skt.recv_data_block(1)
+        buf = self.server_cotp_skt.recv_data_block(1)
         h1_pkt = dissect_h1_ex(*buf)
         if int.from_bytes(h1_pkt.Address_within_memory_block, byteorder='big') == 4:
             payload = h1_pkt.getlayer(Raw).load
-            self._operation = EQUIP_NAME[self._equips][payload.hex()]
+            self._operation = OPERATE_DATA[self._equips][payload.hex()]
             return True
         return False
 

@@ -7,21 +7,33 @@ class s5_client(object):
         self.dconnect_atmt = None
         self.valve_client_atmt = None
         self.ap_client =None
-        self.cotp_params = S5_COTP_Params(dmac, smac, sref, iface)
+        self._cotp_skt = COTPSocket(dmac=dmac, smac=smac, sref=sref, iface=iface)
 
     def do_valve(self, valve_name='', op_type = ''):
-        self.dconnect_atmt = S5_ATMT_DCONNECT(params=self.cotp_params)
-        self.dconnect_atmt.runbg()
-        print(self.dconnect_atmt.cotp_skt._params.your_tpdunr)
-        if not self.valve_client_atmt:
-            self.valve_client_atmt = S5_VALVE_OPERATE_ATMT(valve_name=valve_name, op_type=op_type)
-        else:setattr(self.valve_client_atmt, '_op_type', op_type)
-        self.valve_client_atmt.runbg()
+        # 开启动态连接
+        self.dconnect_atmt = S5_ATMT_DCONNECT(cotp_skt=self._cotp_skt)
+        self.dconnect_atmt.run()
+        # 开关阀门操作
+        self.valve_client_atmt = S5_VALVE_OPERATE_ATMT(cotp_skt=self._cotp_skt, valve_name=valve_name, op_type=op_type)
+        self.valve_client_atmt.run()
+        # 开关阀门操作后进行复位操作
+        self.valve_client_atmt = S5_VALVE_OPERATE_ATMT(cotp_skt=self._cotp_skt, valve_name=valve_name, op_type='reset')
+        self.valve_client_atmt.run()
 
-    def do_dis_dconnect(self):
-        if self.valve_client_atmt:
-            self.valve_client_atmt.cotp_skt.disconnect()
+    def do_dis_dconnect(self):    # 关闭动态连接
+        if self._cotp_skt.is_connected:
+            self._cotp_skt.disconnect()
             log.debug('动态连接已断开')
+        self._do_clear()
+
+    def do_cotp_connect(self):
+        if self._cotp_skt.is_connected == False:
+            self._cotp_skt.connect()
+
+    def _do_clear(self):
+        self.dconnect_atmt = None
+        self.valve_client_atmt = None
+
 
 
 
