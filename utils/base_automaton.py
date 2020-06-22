@@ -228,6 +228,9 @@ class BaseAutomaton(Automaton):
                 a = atmt_state.action.action_function(c, self)
                 if not hasattr(self, atmt_state.action.attr_name):
                     setattr(self, atmt_state.action.attr_name, a)
+                else:
+                    a = self.__getattribute__(a.__name__)
+                    a.atmt_cond[c.atmt_condname] = c.atmt_prio
 
 
 # func需要是一个非 lambda的可调用对象（表示状态函数），或字符串（表示状态名）

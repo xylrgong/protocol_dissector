@@ -37,8 +37,9 @@ OPCODE = (
         0x05: "Read_Request",  # 读请求
         0x06: "Read_Response",  # 读响应
         0x0f: "NULL",  # 空操作码
-        0x0d: "D_Connect",
-        0x8d: "PD_Connect"
+        0x0d: "client",
+        0x8d: "server",
+        0x8e:"Unknown"
 
     },
     {
@@ -46,8 +47,9 @@ OPCODE = (
         "Write_Response": 0x04,
         "Read_Request": 0x05,
         "Read_Response": 0x06,
-        "D_Connect":0x0d,
-        "PD_Connect": 0x8d,
+        "client":0x0d,
+        "server": 0x8d,
+        "Unknown":0x8e,
         None: 0x0f
     }
 )
@@ -176,7 +178,7 @@ def dissect_h1_ex(buf_last):
             memory_type = buf_last[i+2]
             memory_block_number = buf_last[i+3]
             address_within_memory_block = buf_last[i+4:i+4+2]
-            length_in_words = buf_last[i+5:i+5+2]
+            length_in_words = buf_last[i+6:i+6+2]
             pkt = pkt / H1_Request_Block(Block_type=block_type, Block_length=block_length,
                                          Memory_type=memory_type, Memory_block_number=memory_block_number,
                                          Address_within_memory_block=address_within_memory_block,

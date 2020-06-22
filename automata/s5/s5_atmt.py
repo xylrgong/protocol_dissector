@@ -379,6 +379,12 @@ class S5_ATMT_AP_OPERATE(S5_ATMT_Baseclass):
               payload
         self.cotp_skt.send_data(raw(pkt))
 
+    def _send_21252_(self):
+        payload = hex_bytes('0402010204010401000202')
+        pkt = H1(opcode_name='D_Connect', request_block=['DB', 0x02, 0x5304, 0x0404]) / \
+              payload
+        self.cotp_skt.send_data(raw(pkt))
+
     def _send_6148(self):
         payload = hex_bytes('0402')
         pkt = H1(opcode_name='D_Connect', request_block=['DB', 0x02, 0x1804, 0x0402]) / \
@@ -424,11 +430,6 @@ class S5_ATMT_AP_OPERATE(S5_ATMT_Baseclass):
     def _wait_94(self):
         time.sleep(94)
 
-    def _send_21252_(self):
-        payload = hex_bytes('0402010204010401000202')
-        pkt = H1(opcode_name='D_Connect', request_block=['DB', 0x02, 0x5304, 0x0404]) / \
-              payload
-        self.cotp_skt.send_data(raw(pkt))
 
     def _send_7684(self):
         payload = hex_bytes('04020a')
@@ -635,7 +636,6 @@ class S5_ATMT_S5_SERVER(S5_ATMT_Baseclass):
         self.cotp_skt.send_data(raw(pkt))
 
     def _send_2307_AA(self):
-
         payload = hex_bytes('2020')
         pkt = H1(opcode_name='PD_Connect', request_block=['EB', 0x02, 0x0903, 0x0404]) / \
               payload

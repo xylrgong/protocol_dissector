@@ -10,7 +10,7 @@ class TestATMT(BaseAutomaton):
                       (s('TMP') >> s('TMP2')) + cond(lambda: True),
                       (s('TMP2') >> s('END', final=1)) + cond(timeout=2)]
 
-    def action1(self, a1, a2):
+    def action1(self, a1, a2=None):
         print(a1, a2)
 
     def parse_args(self, **kwargs):
