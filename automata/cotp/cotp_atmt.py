@@ -81,8 +81,8 @@ class COTP_ATMT_Connect(COTP_ATMT_Baseclass):
             (s('ERROR_PARAM', error=1) >> s('CONNECTION_OPEN_FAILED')),
             (s('ERROR_TIMEOUT', error=1) >> s('CONNECTION_OPEN_FAILED')) + action(self._set_timeout_errno),
             (s('CONNECTION_OPEN_FAILED') >> s('CONNECTION_CLOSE')) + cond(lambda: self.params.is_passive),
-            (s('CONNECTION_OPEN_FAILED') >> s('END', final=1)) + cond(lambda: not self.params.is_passive),
-            (s('CONNECTION_OPEN') >> s('END', final=1))
+            (s('CONNECTION_OPEN_FAILED') >> s('CONN_END', final=1)) + cond(lambda: not self.params.is_passive),
+            (s('CONNECTION_OPEN') >> s('CONN_END', final=1))
         ]
 
     def _has_error_param(self):
@@ -159,7 +159,7 @@ class COTP_ATMT_Receive(COTP_ATMT_Baseclass):
     def construct(self):
         self.trans = [
             (s('RECV_BEGIN', initial=1) >> s('RECEIVING')),
-            (s('RECEIVING') >> s('END', final=1)) + cond(self._recv_pkt, recv_pkt=1) + action(self._disconnected)
+            (s('RECEIVING') >> s('RECV_END', final=1)) + cond(self._recv_pkt, recv_pkt=1) + action(self._disconnected)
         ]
 
     def parse_args(self, **kwargs):

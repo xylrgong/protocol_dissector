@@ -8,7 +8,7 @@ class S5_SERVER_ATMT(S5_SERVER_ATMT_Baseclass):
             (s('WAIT_FOR_COTP_CONNECT') >> s('WAIT_FOR_21252')) + cond(self.is_cotp_connected),
             (s('WAIT_FOR_21252') >> s('WAIT_FOR_6148')) + cond(self.get_cond(21252, 'svr_is_21252')) + action(self.send_dwnr, dwnr='65283'),
             (s('WAIT_FOR_6148') >> s('WAIT_FOR_COMMAND')) + cond(self.get_cond(6148, 'svr_is_6148')) + action(self.send_dwnr, dwnr='3', dwnr2='4611'),
-            (s('WAIT_FOR_COMMAND') >> s('WAIT_FOR_6916')) + cond(self.get_cond(7428, 'sver_is_7428')) + action(self.send_dwnr, dwnr='unknown'),  # 阀门
+            (s('WAIT_FOR_COMMAND') >> s('WAIT_FOR_6916')) + cond(self.sver_is_7428) + action(self.send_dwnr, dwnr='unknown'),  # 阀门
             (s('WAIT_FOR_6916') >> s('AA_WAIT_FOR_5124')) + cond(self.get_cond(6916, 'valve_is_6916')) + action(self.send_dwnr,dwnr='0',dwnr2='3_valve',dwnr3='4611'),
             (s('AA_WAIT_FOR_5124') >> s('AA_WAIT_FOR_32771')) + cond(self.get_cond(5124, 'vale_is_5124')) + action(self.send_dwnr,dwnr='4099'),
             (s('AA_WAIT_FOR_32771') >> s('AA_WAIT_FOR_33027')) + cond(self.get_cond(32771,'valve_is_32771')) + action(self.send_dwnr, dwnr='3_valve_2'),
@@ -19,12 +19,53 @@ class S5_SERVER_ATMT(S5_SERVER_ATMT_Baseclass):
             (s('AA_WAIT_FOR_772') >> s('COMMAND_DONE')) + cond(self.get_cond(772, 'valve_is_772')) + action(self.send_dwnr, dwnr='4611'),
             (s('COMMAND_DONE') >> s('AA_WAIT_FOR_32771')) +cond(self.get_cond(5124, 'vale_is_5124_'), prio=1) + action(self.send_dwnr, dwnr='4099'),
             (s('COMMAND_DONE') >> s('VALVE_END', final=1)) + cond(self.already_disconnected),
+
+            # 控制AP
+            (s('WAIT_FOR_COMMAND') >> s('WAIT_FOR_1028')) + cond(self._is_1028, prio=1) + action(self.send_dwnr, dwnr='3_ap', dwnr2='4611'),
+            # 控制AP过程 AP_
+            (s('WAIT_FOR_1028') >> s('AP_WAIT_FOR_6148')) + cond(self.get_cond(1028, 'ap_is_1028')) + action(self.send_dwnr, dwnr='3_ap', dwnr2='4611'),
+            (s('AP_WAIT_FOR_6148') >> s('AP_WAIT_FOR_5124')) + cond(self.get_cond(6148, 'ap_is_6148')) + action(self.send_dwnr, dwnr='3_ap', dwnr2='4611'),
+            (s('AP_WAIT_FOR_5124') >> s('AP_WAIT_FOR_32771')) + cond(self.get_cond(5124, 'ap_is_5124')) + action(self.send_dwnr, dwnr='4099'),
+            (s('AP_WAIT_FOR_32771') >> s('AP_WAIT_FOR_33027')) + cond(self.get_cond(32771, 'ap_is_32771')) + action(self.send_dwnr, dwnr='3_'),
+            (s('AP_WAIT_FOR_33027') >> s('AP_WAIT_FOR_DISCONNECT')) + cond(self.get_cond(33027, 'ap_is_33027')) + action(self.send_dwnr, dwnr='4355'),
+            (s('AP_WAIT_FOR_DISCONNECT') >> s('AP_WAIT_FOR_9SEC')) + cond(lambda: not self._is_stopped) + action(
+                self._stop_ap),
+            (s('AP_WAIT_FOR_DISCONNECT') >> s('AP_WAIT_FOR_8SEC')) + cond(lambda: self._is_stopped) + action(
+                self._start_ap),  # 启动AP
+            (s('AP_WAIT_FOR_9SEC') >> s('AP_WAIT_FOR_COTP_CONNECT_2')) + action(self._wait_9),
+            (s('AP_WAIT_FOR_8SEC') >> s('AP_WAIT_FOR_COTP_CONNECT_2')) + action(self._wait_8),
+            # 控制AP第二次21252
+            (s('AP_WAIT_FOR_COTP_CONNECT_2') >> s('AP_WAIT_FOR_21252')) + cond(self.is_cotp_connected),
+            (s('AP_WAIT_FOR_21252') >> s('AP_WAIT_FOR_6148_2')) + cond(self.get_cond(21252, 'ap2_is_21252')) + action(self.send_dwnr, dwnr='65283'),
+            (s('AP_WAIT_FOR_6148_2') >> s('AP_WAIT_FOR_6148_3')) + cond(self.get_cond(6148, 'ap2_is_6148')) + action(self.send_dwnr, dwnr='3', dwnr2='4611'),
+            (s('AP_WAIT_FOR_6148_3') >> s('AP_WAIT_FOR_5124_2')) + cond(self.get_cond(6148, 'ap2_is_6148_')) + action(self.send_dwnr, dwnr='3', dwnr2='4611'),
+            (s('AP_WAIT_FOR_5124_2') >> s('AP_WAIT_FOR_32771_2')) + cond(self.get_cond(5124, 'ap2_is_5124')) + action(self.send_dwnr, dwnr='4099'),
+            (s('AP_WAIT_FOR_32771_2') >> s('AP_WAIT_FOR_33027_2')) + cond(self.get_cond(32771, 'ap2_is_32771')) + action(self.send_dwnr, dwnr='3_'),
+            (s('AP_WAIT_FOR_33027_2') >> s('AP_WAIT_FOR_7648')) + cond(self.get_cond(33027, 'ap2_is_33027')) + action(self.send_dwnr, dwnr='4355'),
+            (s('AP_WAIT_FOR_7648') >> s('AP_WAIT_FOR_DISCONNECT_2')) + cond(self.get_cond(7684, 'ap2_is_7684')) + action(
+                self.send_dwnr, dwnr='9475', dwnr2='4611'),
+            (s('AP_WAIT_FOR_DISCONNECT_2') >> s('END', final=1)) + cond(lambda: not self._is_stopped) + action(
+                self._cotp_disconnect),
+            #  开启AP额外21252
+            (s('AP_WAIT_FOR_DISCONNECT_2') >> s('AP_WAIT_FOR_94SEC')) + cond(lambda: self._is_stopped) + action(
+                self._cotp_disconnect),
+            (s('AP_WAIT_FOR_94SEC') >> s('AP_WAIT_FOR_COTP_CONNECT_3')) + action(self._wait_94),
+            (s('AP_WAIT_FOR_COTP_CONNECT_3') >> s('AP_WAIT_FOR_21252_2')) + cond(self.is_cotp_connected),
+            (s('AP_WAIT_FOR_21252_2') >> s('AP_WAIT_FOR_6148_4')) + cond(self.get_cond(21252, 'ap3_is_21252')) + action(self.send_dwnr, dwnr='65283'),
+            (s('AP_WAIT_FOR_6148_4') >> s('AP_WAIT_FOR_6148_5')) + cond(self.get_cond(6148, 'ap3_is_6148')) + action(self.send_dwnr, dwnr='3', dwnr2='4611'),
+            (s('AP_WAIT_FOR_6148_5') >> s('AP_WAIT_FOR_5124_3')) + cond(self.get_cond(6148, 'ap3_is_6148_')) + action(self.send_dwnr, dwnr='3', dwnr2='4611'),
+            (s('AP_WAIT_FOR_5124_3') >> s('AP_WAIT_FOR_32771_3')) + cond(self.get_cond(5124, 'ap3_is_5124')) + action(self.send_dwnr, dwnr='4099'),
+            (s('AP_WAIT_FOR_32771_3') >> s('AP_WAIT_FOR_33027_3')) + cond(self.get_cond(32771, 'ap3_is_32771')) + action(self.send_dwnr, dwnr='3_'),
+            (s('AP_WAIT_FOR_33027_3') >> s('AP_WAIT_FOR_1028')) + cond(self.get_cond(33027, 'ap3_is_33027')) + action(self.send_dwnr, dwnr='4355'),
+            (s('AP_WAIT_FOR_1028') >> s('AP_WAIT_FOR_COTP_CONNECT_3')) + cond(self.get_cond(1028, 'ap3_is_1028')) + action(
+                self.send_dwnr, dwnr='3_ap', dwnr2='4611'),
+            (s('AP_WAIT_FOR_COTP_CONNECT_3') >> s('END', final=1)) + action(self._cotp_disconnect),
         ]
     def parse_args(self, **kwargs):
         self._is_stopped = kwargs.pop('_is_stopped', False)
         self._equips = None
         self._operation = None
-        # params = kwargs.pop('params', None)
+        self._recv_queue = []
         self.server_cotp_skt = kwargs.pop('sever_cotp_skt', None)
         S5_SERVER_ATMT_Baseclass.parse_args(self, **kwargs)
 
@@ -41,6 +82,21 @@ class S5_SERVER_ATMT(S5_SERVER_ATMT_Baseclass):
         time.sleep(H1_TIMEOUT)
         if not self.server_cotp_skt.is_connected:
             return True
+        return False
+
+    def sver_is_7428(self):
+        buf = self.server_cotp_skt.recv_data_block(1)
+        h1_pkt = dissect_h1_ex(*buf)
+        pkt_DWNR = int.from_bytes(h1_pkt.Address_within_memory_block, byteorder='big')
+        log.debug('收到序列号：{}'.format(pkt_DWNR))
+        if pkt_DWNR == 7428:
+            return True
+        self._recv_queue.append(pkt_DWNR)
+
+    def _is_1028(self):
+        # 先判定是否收到7428 如果不是则存入列表 此时再做判断
+        if len(self._recv_queue):
+            return self._recv_queue.pop() == 1028
         return False
 
     def valve_is_2052(self):
@@ -61,3 +117,25 @@ class S5_SERVER_ATMT(S5_SERVER_ATMT_Baseclass):
             return True
         return False
 
+
+    def _stop_ap(self):
+        log.debug("正在关闭控制器AP101...")
+        time.sleep(5)
+        pass
+
+    def _start_ap(self):
+        log.debug("正在启动控制器AP101...")
+        time.sleep(5)
+        pass
+
+    def _wait_9(self):
+        # time.sleep(9)
+        pass
+
+    def _wait_8(self):
+        # time.sleep(8)
+        pass
+
+    def _wait_94(self):
+        # time.sleep(94)
+        pass

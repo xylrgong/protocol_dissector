@@ -25,6 +25,15 @@ class S5_CLIENT_ATMT_Baseclass(BaseAutomaton):
         _is_dwnr.__name__ = func_name
         return _is_dwnr
 
+    def get_conn(self, connect_name):
+        def _cotp_conn():
+            if not self.cotp_skt.connect():
+                self.is_dconnected = True
+                return True
+            return False
+        _cotp_conn.__name__ = connect_name
+        return _cotp_conn
+
     # def verifyDWNR(self, pkt, dwnr):
     #     h1_pkt = dissect_h1_ex(*pkt)
     #     pkt_DWNR = int.from_bytes(h1_pkt.Address_within_memory_block, byteorder='big')

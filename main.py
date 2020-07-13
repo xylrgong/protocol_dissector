@@ -23,9 +23,9 @@ import logging as log
 def main():
     skt = s5_client(dmac='08:00:06:1a:11:11', smac='00:30:6e:0c:87:4e', sref=0x01,
                      iface='以太网')
-    skt.do_valve(valve_name='aa101', op_type='open')
-    skt.do_dis_dconnect()
-
+    # skt.do_valve(valve_name='aa101', op_type='open')
+    # skt.do_dis_dconnect()
+    skt.do_ap()
     # skt = COTPSocket(dmac='08:00:06:1a:11:11', smac='00:30:6e:0c:87:4e', sref=0x01,
     #                   iface='以太网')
     # skt.connect()
