@@ -103,7 +103,7 @@ class S5_SERVER_ATMT(S5_SERVER_ATMT_Baseclass):
         h1_pkt = dissect_h1_ex(*buf)
         if int.from_bytes(h1_pkt.Address_within_memory_block, byteorder='big') == 2052:
             payload = h1_pkt.getlayer(Raw).load
-            self._equips = EQUIP_NAME[payload[3:]]
+            self._equips = EQUIP_NAME[payload[1:]]
             return True
         return False
 

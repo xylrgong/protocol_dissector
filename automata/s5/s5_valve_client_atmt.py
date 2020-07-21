@@ -5,10 +5,8 @@ class S5_ATMT_DCONNECT(S5_CLIENT_ATMT_Baseclass):
     def construct(self):
         self.trans = [
             # 建立动态连接
-            (s('BEGIN', initial=1) >> s('VALVE_BEGIN')) + cond(lambda: self.is_dconnected) + action(self.send_dwnr,
-                                                                                                    dwnr='5124'),
             (s('BEGIN', initial=1) >> s('WAIT_FOR_COTP_CONNECT')) + cond(self._cotp_connected, prio=1),
-            (s('WAIT_FOR_COTP_CONNECT') >> s('WAIT_FOR_D_65283')) + action(self.send_dwnr, dwnr='21252'),
+            (s('WAIT_FOR_COTP_CONNECT') >> s('WAIT_FOR_D_65283')) + action(self.send_dwnr, dwnr='21252_'),
             (s('WAIT_FOR_D_65283') >> s('WAIT_FOR_D_3')) + cond(self.get_cond(65283, 'dc_is_65283')) + action(
                 self.send_dwnr, dwnr='6148'),
             (s('WAIT_FOR_D_3') >> s('WAIT_FOR_D_4611')) + cond(self.get_cond(3, 'dc_is_3')),

@@ -24,6 +24,8 @@ class s5_client(object):
         self.valve_client_atmt = S5_VALVE_OPERATE_ATMT(cotp_skt=self.valve_cotp_skt, valve_name=valve_name, op_type=op_type)
         self.valve_client_atmt.run()
         # 开关阀门操作后进行复位操作
+        log.debug('15s后准备进行复位操作...20s')
+        time.sleep(15)
         self.valve_client_atmt = S5_VALVE_OPERATE_ATMT(cotp_skt=self.valve_cotp_skt, valve_name=valve_name, op_type='reset')
         self.valve_client_atmt.run()
 
