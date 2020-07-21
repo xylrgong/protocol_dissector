@@ -8,7 +8,7 @@ class s5_client(object):
         self.dconnect_atmt = None
         self.valve_client_atmt = None
         self.ap_client_atmt =None
-        self.is_running = True    # 控制器运行状态
+        self.is_running = False    # 控制器运行状态
         self.s5_params = S5_COTP_Params(dmac, smac, sref, iface)
         self.valve_cotp_skt = None
         self.ap_cotp_skt = None

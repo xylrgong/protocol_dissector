@@ -33,6 +33,15 @@ class S5_SERVER_ATMT_Baseclass(BaseAutomaton):
             self.send_dwnr(dwnr3)
             print(dwnr3)
 
+    def get_conn(self, conn_name):
+        def is_cotp_connected():
+            if self.server_cotp_skt.accept():
+                return False
+            return True
+        is_cotp_connected.__name__ = conn_name
+        return is_cotp_connected
+
+
 
 
 

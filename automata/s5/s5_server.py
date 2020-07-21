@@ -4,7 +4,7 @@ from automata.s5.s5_server_atmt import *
 class s5_server(object):
     def __init__(self, dmac, smac, sref, iface):
         self.s5_server_atmt = None
-        self.is_stopped = False
+        self.is_stopped = True
         self.cotp_params = S5_COTP_Params(dmac, smac, sref, iface)
         self._sever_cotp_socket1 = self.get_cotp_skt(dmac, smac, sref, iface)
         self._sever_cotp_socket2 = self.get_cotp_skt(dmac, smac, sref, iface)
@@ -12,7 +12,7 @@ class s5_server(object):
 
 
     def accept_order(self):
-        self.s5_server_atmt = S5_SERVER_ATMT(sever_cotp_skt=self._sever_cotp_socket1,sever_cotp_skt2=self._sever_cotp_socket2,sever_cotp_skt3=self._sever_cotp_socket3, _is_stopped=self.is_stopped,ap_callback= self.operate_ap)
+        self.s5_server_atmt = S5_SERVER_ATMT(sever_cotp_skt=self._sever_cotp_socket1, sever_cotp_skt2=self._sever_cotp_socket2, sever_cotp_skt3=self._sever_cotp_socket3, _is_stopped=self.is_stopped,ap_callback= self.operate_ap)
         self.s5_server_atmt.run()
 
     def operate_ap(self):

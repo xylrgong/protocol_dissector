@@ -8,10 +8,11 @@ class S5_SERVER_ATMT(S5_SERVER_ATMT_Baseclass):
             (s('WAIT_FOR_COTP_CONNECT') >> s('WAIT_FOR_21252')) + cond(self.get_conn('get_conn1')),
             (s('WAIT_FOR_21252') >> s('WAIT_FOR_6148')) + cond(self.get_cond(21252, 'svr_is_21252')) + action(self.send_dwnr, dwnr='65283'),
             (s('WAIT_FOR_6148') >> s('WAIT_FOR_COMMAND')) + cond(self.get_cond(6148, 'svr_is_6148')) + action(self.send_dwnr, dwnr='3', dwnr2='4611'),
-            (s('WAIT_FOR_COMMAND') >> s('WAIT_FOR_6916')) + cond(self.sver_is_7428) + action(self.send_dwnr, dwnr='unknown'),  # 阀门
+            # 阀门操作
+            (s('WAIT_FOR_COMMAND') >> s('WAIT_FOR_6916')) + cond(self.sver_is_7428) + action(self.send_dwnr, dwnr='unknown'),
             (s('WAIT_FOR_6916') >> s('AA_WAIT_FOR_5124')) + cond(self.get_cond(6916, 'valve_is_6916')) + action(self.send_dwnr,dwnr='0',dwnr2='3_valve',dwnr3='4611'),
             (s('AA_WAIT_FOR_5124') >> s('AA_WAIT_FOR_32771')) + cond(self.get_cond(5124, 'vale_is_5124')) + action(self.send_dwnr,dwnr='4099'),
-            (s('AA_WAIT_FOR_32771') >> s('AA_WAIT_FOR_33027')) + cond(self.get_cond(32771,'valve_is_32771')) + action(self.send_dwnr, dwnr='3_valve_2'),
+            (s('AA_WAIT_FOR_32771') >> s('AA_WAIT_FOR_33027')) + cond(self.get_cond(32771, 'valve_is_32771')) + action(self.send_dwnr, dwnr='3_valve_2'),
             (s('AA_WAIT_FOR_33027') >> s('AA_WAIT_FOR_2052')) + cond(self.get_cond(33027, 'valve_is_33027')) + action(self.send_dwnr, dwnr='4355'),
             (s('AA_WAIT_FOR_2052') >> s('AA_WAIT_FOR_4')) + cond(self.valve_is_2052) + action(self.send_dwnr, dwnr='2307'),
             (s('AA_WAIT_FOR_4') >> s('AA_WAIT_FOR_6148')) + cond(self.valve_is_4) + action(self.send_dwnr, dwnr='4611'),
@@ -20,9 +21,8 @@ class S5_SERVER_ATMT(S5_SERVER_ATMT_Baseclass):
             (s('COMMAND_DONE') >> s('AA_WAIT_FOR_32771')) +cond(self.get_cond(5124, 'vale_is_5124_'), prio=1) + action(self.send_dwnr, dwnr='4099'),
             (s('COMMAND_DONE') >> s('VALVE_END', final=1)) + cond(self.already_disconnected),
 
-            # 控制AP
+            # 控制AP过程
             (s('WAIT_FOR_COMMAND') >> s('WAIT_FOR_1028')) + cond(self._is_1028, prio=1) + action(self.send_dwnr, dwnr='3_ap', dwnr2='4611'),
-            # 控制AP过程 AP_
             (s('WAIT_FOR_1028') >> s('AP_WAIT_FOR_6148')) + cond(self.get_cond(1028, 'ap_is_1028')) + action(self.send_dwnr, dwnr='3_ap', dwnr2='4611'),
             (s('AP_WAIT_FOR_6148') >> s('AP_WAIT_FOR_5124')) + cond(self.get_cond(6148, 'ap_is_6148')) + action(self.send_dwnr, dwnr='3_ap', dwnr2='4611'),
             (s('AP_WAIT_FOR_5124') >> s('AP_WAIT_FOR_32771')) + cond(self.get_cond(5124, 'ap_is_5124')) + action(self.send_dwnr, dwnr='4099'),
@@ -74,15 +74,6 @@ class S5_SERVER_ATMT(S5_SERVER_ATMT_Baseclass):
         self.server_cotp_skt = None
         self.server_cotp_skt=self.server_cotp_skt3
 
-    def get_conn(self, conn_name):
-        def is_cotp_connected():
-            if self.server_cotp_skt.accept():
-                return False
-            return True
-        is_cotp_connected.__name__ = conn_name
-        return is_cotp_connected
-
-
     def already_disconnected(self):
         time.sleep(H1_TIMEOUT)
         if not self.server_cotp_skt.is_connected:
@@ -124,7 +115,6 @@ class S5_SERVER_ATMT(S5_SERVER_ATMT_Baseclass):
             self._operation = OPERATE_DATA[self._equips][payload.hex()]
             return True
         return False
-
 
     def _stop_ap(self):
         log.debug("正在关闭控制器AP101...")

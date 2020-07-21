@@ -58,9 +58,12 @@ class S5_ATMT_AP_OPERATE(S5_CLIENT_ATMT_Baseclass):
         self._ap_callback = kwargs.pop('ap_callback', False)
         S5_CLIENT_ATMT_Baseclass.parse_args(self, **kwargs)
 
+
     def _cotp_disconnect(self, ap_done=False):
+        # AP操作完成时改写AP运行状态
         if ap_done:
             self._ap_callback()
+        # 主动断开COTP连接
         if self.is_dconnected == True:
             self.cotp_skt.disconnect()
             self.is_dconnected = False
