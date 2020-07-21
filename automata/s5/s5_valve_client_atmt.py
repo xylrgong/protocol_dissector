@@ -22,8 +22,6 @@ class S5_ATMT_DCONNECT(S5_CLIENT_ATMT_Baseclass):
         ]
 
     def parse_args(self, **kwargs):
-        # params = kwargs.pop('params', None)
-        # self.cotp_skt = COTPSocket(dmac=params.dmac, smac=params.smac, sref=params.sref, iface=params.iface)
         self.cotp_skt = kwargs.pop('cotp_skt', None)
         S5_CLIENT_ATMT_Baseclass.parse_args(self, **kwargs)
 

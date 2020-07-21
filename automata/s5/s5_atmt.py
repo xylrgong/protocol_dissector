@@ -11,6 +11,10 @@ from automata.cotp.cotp_socket import *
 from automata.s5.S5_config import *
 import binascii
 
+###################
+#  这个文件已弃用    #
+###################
+
 
 # S5自动机的基类
 class S5_ATMT_Baseclass(BaseAutomaton):

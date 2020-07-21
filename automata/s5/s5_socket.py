@@ -8,6 +8,10 @@ import threading
 from utils.utils import *
 from config import *
 
+###################
+#  这个文件已弃用    #
+###################
+
 
 class s5Socket(object):
     # 连接到主机，阻塞式接口

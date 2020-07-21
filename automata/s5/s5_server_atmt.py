@@ -4,8 +4,8 @@ from automata.s5.s5_server_baseclass import *
 class S5_SERVER_ATMT(S5_SERVER_ATMT_Baseclass):
     def construct(self):
         self.trans = [
-            (s('VALVE_BEGIN', initial=1) >> s('WAIT_FOR_COTP_CONNECT')),
-            (s('WAIT_FOR_COTP_CONNECT') >> s('WAIT_FOR_21252')) + cond(self.is_cotp_connected),
+            (s('SERVER_BEGIN', initial=1) >> s('WAIT_FOR_COTP_CONNECT')),
+            (s('WAIT_FOR_COTP_CONNECT') >> s('WAIT_FOR_21252')) + cond(self.get_conn('get_conn1')),
             (s('WAIT_FOR_21252') >> s('WAIT_FOR_6148')) + cond(self.get_cond(21252, 'svr_is_21252')) + action(self.send_dwnr, dwnr='65283'),
             (s('WAIT_FOR_6148') >> s('WAIT_FOR_COMMAND')) + cond(self.get_cond(6148, 'svr_is_6148')) + action(self.send_dwnr, dwnr='3', dwnr2='4611'),
             (s('WAIT_FOR_COMMAND') >> s('WAIT_FOR_6916')) + cond(self.sver_is_7428) + action(self.send_dwnr, dwnr='unknown'),  # 阀门
@@ -35,7 +35,7 @@ class S5_SERVER_ATMT(S5_SERVER_ATMT_Baseclass):
             (s('AP_WAIT_FOR_9SEC') >> s('AP_WAIT_FOR_COTP_CONNECT_2')) + action(self._wait_9),
             (s('AP_WAIT_FOR_8SEC') >> s('AP_WAIT_FOR_COTP_CONNECT_2')) + action(self._wait_8),
             # 控制AP第二次21252
-            (s('AP_WAIT_FOR_COTP_CONNECT_2') >> s('AP_WAIT_FOR_21252')) + cond(self.is_cotp_connected),
+            (s('AP_WAIT_FOR_COTP_CONNECT_2') >> s('AP_WAIT_FOR_21252')) + cond(self.get_conn('get_conn2')),
             (s('AP_WAIT_FOR_21252') >> s('AP_WAIT_FOR_6148_2')) + cond(self.get_cond(21252, 'ap2_is_21252')) + action(self.send_dwnr, dwnr='65283'),
             (s('AP_WAIT_FOR_6148_2') >> s('AP_WAIT_FOR_6148_3')) + cond(self.get_cond(6148, 'ap2_is_6148')) + action(self.send_dwnr, dwnr='3', dwnr2='4611'),
             (s('AP_WAIT_FOR_6148_3') >> s('AP_WAIT_FOR_5124_2')) + cond(self.get_cond(6148, 'ap2_is_6148_')) + action(self.send_dwnr, dwnr='3', dwnr2='4611'),
@@ -44,13 +44,11 @@ class S5_SERVER_ATMT(S5_SERVER_ATMT_Baseclass):
             (s('AP_WAIT_FOR_33027_2') >> s('AP_WAIT_FOR_7648')) + cond(self.get_cond(33027, 'ap2_is_33027')) + action(self.send_dwnr, dwnr='4355'),
             (s('AP_WAIT_FOR_7648') >> s('AP_WAIT_FOR_DISCONNECT_2')) + cond(self.get_cond(7684, 'ap2_is_7684')) + action(
                 self.send_dwnr, dwnr='9475', dwnr2='4611'),
-            (s('AP_WAIT_FOR_DISCONNECT_2') >> s('END', final=1)) + cond(lambda: not self._is_stopped) + action(
-                self._cotp_disconnect),
+            (s('AP_WAIT_FOR_DISCONNECT_2') >> s('END', final=1)) + cond(lambda: not self._is_stopped) + action(self._ap_done),
             #  开启AP额外21252
-            (s('AP_WAIT_FOR_DISCONNECT_2') >> s('AP_WAIT_FOR_94SEC')) + cond(lambda: self._is_stopped) + action(
-                self._cotp_disconnect),
+            (s('AP_WAIT_FOR_DISCONNECT_2') >> s('AP_WAIT_FOR_94SEC')) + cond(lambda: self._is_stopped) + action(self.get_skt),
             (s('AP_WAIT_FOR_94SEC') >> s('AP_WAIT_FOR_COTP_CONNECT_3')) + action(self._wait_94),
-            (s('AP_WAIT_FOR_COTP_CONNECT_3') >> s('AP_WAIT_FOR_21252_2')) + cond(self.is_cotp_connected),
+            (s('AP_WAIT_FOR_COTP_CONNECT_3') >> s('AP_WAIT_FOR_21252_2')) + cond(self.get_conn('get_conn3')),
             (s('AP_WAIT_FOR_21252_2') >> s('AP_WAIT_FOR_6148_4')) + cond(self.get_cond(21252, 'ap3_is_21252')) + action(self.send_dwnr, dwnr='65283'),
             (s('AP_WAIT_FOR_6148_4') >> s('AP_WAIT_FOR_6148_5')) + cond(self.get_cond(6148, 'ap3_is_6148')) + action(self.send_dwnr, dwnr='3', dwnr2='4611'),
             (s('AP_WAIT_FOR_6148_5') >> s('AP_WAIT_FOR_5124_3')) + cond(self.get_cond(6148, 'ap3_is_6148_')) + action(self.send_dwnr, dwnr='3', dwnr2='4611'),
@@ -59,30 +57,40 @@ class S5_SERVER_ATMT(S5_SERVER_ATMT_Baseclass):
             (s('AP_WAIT_FOR_33027_3') >> s('AP_WAIT_FOR_1028')) + cond(self.get_cond(33027, 'ap3_is_33027')) + action(self.send_dwnr, dwnr='4355'),
             (s('AP_WAIT_FOR_1028') >> s('AP_WAIT_FOR_COTP_CONNECT_3')) + cond(self.get_cond(1028, 'ap3_is_1028')) + action(
                 self.send_dwnr, dwnr='3_ap', dwnr2='4611'),
-            (s('AP_WAIT_FOR_COTP_CONNECT_3') >> s('END', final=1)) + action(self._cotp_disconnect),
+            (s('AP_WAIT_FOR_COTP_CONNECT_3') >> s('END', final=1))+action(self._ap_done)
         ]
     def parse_args(self, **kwargs):
+        self.server_cotp_skt = kwargs.pop('sever_cotp_skt', None)
+        self.server_cotp_skt2 = kwargs.pop('sever_cotp_skt2', None)
+        self.server_cotp_skt3 = kwargs.pop('sever_cotp_skt3', None)
         self._is_stopped = kwargs.pop('_is_stopped', False)
+        self._ap_callback = kwargs.pop('ap_callback', None)
         self._equips = None
         self._operation = None
         self._recv_queue = []
-        self.server_cotp_skt = kwargs.pop('sever_cotp_skt', None)
         S5_SERVER_ATMT_Baseclass.parse_args(self, **kwargs)
 
-    def is_cotp_connected(self):
-        if self.server_cotp_skt.accept():
-            return False
-        return True
-
-    def _cotp_disconnect(self):
-        self.server_cotp_skt.disconnect()
+    def get_skt(self):
         self.server_cotp_skt = None
+        self.server_cotp_skt=self.server_cotp_skt3
+
+    def get_conn(self, conn_name):
+        def is_cotp_connected():
+            if self.server_cotp_skt.accept():
+                return False
+            return True
+        is_cotp_connected.__name__ = conn_name
+        return is_cotp_connected
+
 
     def already_disconnected(self):
         time.sleep(H1_TIMEOUT)
         if not self.server_cotp_skt.is_connected:
             return True
         return False
+
+    def _ap_done(self):
+        self._ap_callback()
 
     def sver_is_7428(self):
         buf = self.server_cotp_skt.recv_data_block(1)
@@ -120,6 +128,7 @@ class S5_SERVER_ATMT(S5_SERVER_ATMT_Baseclass):
 
     def _stop_ap(self):
         log.debug("正在关闭控制器AP101...")
+
         time.sleep(5)
         pass
 
@@ -130,11 +139,13 @@ class S5_SERVER_ATMT(S5_SERVER_ATMT_Baseclass):
 
     def _wait_9(self):
         # time.sleep(9)
-        pass
+        self.server_cotp_skt = None
+        self.server_cotp_skt = self.server_cotp_skt2
 
     def _wait_8(self):
         # time.sleep(8)
-        pass
+        self.server_cotp_skt = None
+        self.server_cotp_skt = self.server_cotp_skt2
 
     def _wait_94(self):
         # time.sleep(94)
