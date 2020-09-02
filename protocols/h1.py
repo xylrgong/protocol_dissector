@@ -109,6 +109,7 @@ class H1_Request_Block(Packet):
         XByteField("Memory_block_number", 0x00),
         XShortField("Address_within_memory_block", 0x0000),
         XShortField("Length_in_words", 0x0000),
+        XShortField("H1_data", 0x0000),
     ]
 
 
@@ -124,10 +125,11 @@ def H1(opcode_name=None, request_block=[]):
         memory_block_number = request_block[1]
         address_within_memory_block = request_block[2]
         length_in_words = request_block[3]
+        H1_data = request_block[4]
         if memory_name in MEMORY_TYPE[1]:
             h1_pkt = h1_pkt / H1_Request_Block(Memory_type=memory_type, Memory_block_number=memory_block_number,
                                                Address_within_memory_block=address_within_memory_block,
-                                               Length_in_words=length_in_words)
+                                               Length_in_words=length_in_words, H1_data=H1_data)
         else:
             log.info("不支持的内存类型, 内存名：{0}".format(memory_name))
     h1_pkt.Length_indicator = len(h1_pkt)
@@ -155,11 +157,12 @@ def dissect_h1(buf):
             memory_block_number = buf[i+3]
             address_within_memory_block = buf[i+4:i+4+2]
             length_in_words = buf[i+6:i+6+2]
+            H1_data = buf[i+6+2:i+6+4]
             pkt = pkt / H1_Request_Block(Block_type=block_type, Block_length=block_length,
                                          Memory_type=memory_type, Memory_block_number=memory_block_number,
                                          Address_within_memory_block=address_within_memory_block,
-                                         Length_in_words=length_in_words)
-            i+=8
+                                         Length_in_words=length_in_words, H1_data=H1_data)
+            i+=10
     pkt = pkt / buf[i:]
     return pkt
 
@@ -179,11 +182,12 @@ def dissect_h1_ex(buf_last):
             memory_block_number = buf_last[i+3]
             address_within_memory_block = buf_last[i+4:i+4+2]
             length_in_words = buf_last[i+6:i+6+2]
+            H1_data = buf_last[i+6+2:i+6+4]
             pkt = pkt / H1_Request_Block(Block_type=block_type, Block_length=block_length,
                                          Memory_type=memory_type, Memory_block_number=memory_block_number,
                                          Address_within_memory_block=address_within_memory_block,
-                                         Length_in_words=length_in_words)
-            i+=8
+                                         Length_in_words=length_in_words, H1_data=H1_data)
+            i+=10
     pkt = pkt / buf_last[i:]
     return pkt
 

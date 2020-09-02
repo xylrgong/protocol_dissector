@@ -12,7 +12,7 @@ class S5_CLIENT_ATMT_Baseclass(BaseAutomaton):
 
     def send_dwnr(self, dwnr):
         pkt = H1(*h1_payload[dwnr][0]) / hex_bytes(h1_payload[dwnr][1])
-        print(dwnr)
+        print('已发送', dwnr)
         self.cotp_skt.send_data(raw(pkt))
 
     def get_cond(self, dwnr, func_name):
