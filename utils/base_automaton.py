@@ -1,6 +1,9 @@
 from scapy.automaton import *
 from scapy.automaton import _ATMT_to_supersocket
+from scapy.packet import Packet
 from config import *
+from utils.utils import *
+from utils.packet_queue import PacketQueue
 import scapy.modules.six as six
 
 
@@ -40,6 +43,10 @@ class BaseAutomaton(Automaton):
     def construct(self):
         pass
 
+    # 通过pipe发送到自动机线程
+    def send_pkt_to_atmt(self, pkt):
+        self.in_queue.append_pkt(pkt)
+
     class ATMTState(object):
         def __init__(self, func, initial=0, final=0, error=0):
             self._func = func
@@ -53,8 +60,8 @@ class BaseAutomaton(Automaton):
 
         def state_function(self, obj):
             @ATMT.state(initial=self._initial, final=self._final, error=0)
-            def f(obj):
-                log.debug('状态转移：{}'.format(self.attr_name))
+            def f(obj_self):
+                log.debug('状态转移：{:<35}自动机：{}'.format(self.attr_name, obj_self))
                 self._func()
 
             f.__name__ = "%s_wrapper" % self.attr_name
@@ -83,6 +90,7 @@ class BaseAutomaton(Automaton):
         # @cond_type: 0 - normal
         #             1 - receive_condition
         #             2 - timeout
+        #             3 - wait for
         def __init__(self, func=None, cond_type=0, timeout=0, prio=0):
             self._func = func
             self._type = cond_type
@@ -97,24 +105,61 @@ class BaseAutomaton(Automaton):
 
         def condition_function(self, state, next_state, obj, *args, **kwargs):
             cf = None
+            # normal
             if self._type == 0:
                 @ATMT.condition(state, prio=self._prio)
-                def f(obj):
+                def f(obj_self):
+                    log.debug('条件：{:<35}自动机：{}'.format(self.attr_name, obj_self))
                     if self._func():
                         raise next_state(obj).action_parameters(*args, **kwargs)
                 cf = f
+            # receive pkt
             elif self._type == 1:
                 @ATMT.receive_condition(state, prio=self._prio)
-                def f(obj, pkt):
+                def f(obj_self, pkt):
+                    log.debug('条件：{:<35}自动机：{}'.format(self.attr_name, obj_self))
                     if self._func(pkt):
                         raise next_state(obj).action_parameters(*args, **kwargs)
                 cf = f
+            # timeout
             elif self._type == 2:
                 @ATMT.timeout(state, self._timeout)
-                def f(obj):
+                def f(obj_self):
+                    log.debug('条件：{:<35}自动机：{}'.format(self.attr_name, obj_self))
                     if self._func():
                         raise next_state(obj).action_parameters(*args, **kwargs)
                 cf = f
+            # wait for
+            elif self._type == 3:
+                @ATMT.condition(state, prio=self._prio)
+                def f(obj_self):
+                    while True:
+                        log.debug('条件：{:<35}自动机：{}'.format(self.attr_name, obj_self))
+                        pkt = obj.in_queue.recv_pkt_block(1)[0]
+                        if not isinstance(pkt, Packet):
+                            log.warning('Unexpected pipe data: {}'.format(pkt))
+                            return  # the atmt may be stuck
+
+                        result = self._func(pkt)
+                        is_succeed = (result & 0x10) <= 0
+                        pkt_action = result & 0x0f
+
+                        if pkt_action == 0 or pkt_action == 2:  # forward
+                            obj.out_queue.append_pkt(pkt)
+                        elif pkt_action == 1:  # drop
+                            # do nothing
+                            pass
+                        elif pkt_action == 3:  # re-process
+                            obj.in_queue.append_pkt(pkt)
+
+                        if is_succeed:
+                            raise next_state(obj).action_parameters(*args, **kwargs)
+
+                        if pkt_action == 2:
+                            continue
+                        break
+                cf = f
+
             cf.__name__ = self.attr_name
             cf.atmt_condname = self.attr_name
             cf.__self__ = obj
@@ -131,7 +176,8 @@ class BaseAutomaton(Automaton):
 
         def action_function(self, condition, obj):
             @ATMT.action(condition, self._prio)
-            def f(obj, *args, **kwargs):
+            def f(obj_self, *args, **kwargs):
+                log.debug('行为：{:<35}自动机：{}'.format(self.attr_name, obj_self))
                 self._func(*args, **kwargs)
 
             f.__name__ = self.attr_name
@@ -203,6 +249,8 @@ class BaseAutomaton(Automaton):
 
     def __init__(self, *args, **kwargs):
         Automaton.__init__(self, ll=conf.L2socket, *args, **kwargs)
+        self.in_queue = PacketQueue()
+        self.out_queue = PacketQueue()
 
     # 将 self.trans中的状态转移重写为 Automaton的状态函数、条件函数和行为函数
     def _initialize(self):
@@ -258,6 +306,22 @@ def cond(func=None, timeout=0, recv_pkt=False, prio=0):
     if timeout > 0:
         cond_type = 2
     return BaseAutomaton.ATMTCondition(func, cond_type, timeout, prio)
+
+
+# 等待外部输入的条件，func需要具有这样的签名：
+# def func(self, pkt):
+#     ...
+#     return int_value
+# 返回值含义: 表示对 pkt 的处理方式
+#           0x00 - 条件成立，转发 pkt
+#           0x01 - 条件成立，丢弃 pkt
+#           0x10 - 条件不成立，转发 pkt
+#           0x11 - 条件不成立，丢弃 pkt
+#           0x12 - 条件不成立，转发 pkt，之后重新执行此条件函数
+#           0x13 - 条件不成立，重处理 pkt（重新送进输入队列，作为下个 wait4 条件的输入）
+def wait4(func=None, prio=0):
+    cond_type = 3
+    return BaseAutomaton.ATMTCondition(func, cond_type, prio=prio)
 
 
 # func需要是一个非 lambda的可调用对象（表示行为函数），在发生状态转移后，进入下一个状态函数前，func会被调用

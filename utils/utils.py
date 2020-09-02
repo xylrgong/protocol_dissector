@@ -1,4 +1,5 @@
 from scapy.layers.l2 import Dot3, LLC
+from scapy.utils import *
 from protocols.cotp import *
 import re
 
@@ -20,3 +21,7 @@ def lengthof_fields_desc(fields_desc=[]):
 
 def is_mac(m):
     return re.match('^([A-Fa-f0-9]{2}:){5}[A-Fa-f0-9]{2}$', m) is not None
+
+
+def to_hex(pkt):
+    return hexstr(pkt, onlyhex=1)

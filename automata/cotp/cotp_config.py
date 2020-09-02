@@ -30,11 +30,16 @@ class COTP_Connection(object):
         self.dref = dref
         self.sref = sref
 
+    # per flow hash value
+    def get_hash(self):
+        return abs(hash((self.dmac, self.smac)) +
+                   hash((self.smac, self.dmac)))
+
     def __eq__(self, other):
         return self.dmac == other.dmac and \
-                self.smac == other.smac and \
-                self.dref == other.dref and \
-                self.sref == other.sref
+               self.smac == other.smac and \
+               self.sref == other.sref and \
+               self.dref == other.dref
 
     def __str__(self):
         return '[COTP CONNECTION] dmac:({}) smac:({}) dref:({}) sref:({})'.format(self.dmac, self.smac, self.dref, self.sref)

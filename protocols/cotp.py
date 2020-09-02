@@ -248,6 +248,7 @@ def dissect_param(buf, i):
 
 
 def dissect_cotp(buf):
+    buf = bytes(buf)
     if len(buf) < (14 + 3 + 1):
         log.warning("不完整的COTP数据包，长度：{}".format(len(buf)))
         return
