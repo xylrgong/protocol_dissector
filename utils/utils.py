@@ -25,3 +25,7 @@ def is_mac(m):
 
 def to_hex(pkt):
     return hexstr(pkt, onlyhex=1)
+
+
+def h2b(s):
+    return bytes.fromhex(s)

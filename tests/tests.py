@@ -1,6 +1,8 @@
 from tests.test_passive_atmt import *
 from automata.cotp.cotp_config import *
 from proxy.proxy_manager import *
+from protocols.packet_giop import *
+from utils.utils import *
 
 
 class Test(object):
@@ -8,10 +10,28 @@ class Test(object):
         pass
 
     def run(self):
-        self.test_proxy_cotp()
+        self.test_packet_giop()
 
         print('Sleeping...')
         time.sleep(99999)
+
+    # 添加测试代码，然后在 run() 中调用
+
+    def test_packet_giop(self):
+        pkt = GIOP(type='Request',
+                   RequestID=1512756,
+                   KeyAddress=h2b('14010f0052535403952b5f502900000300000001000000040000'),
+                   RequestOperation='idl_rcv_rdb_receive_data',
+                   StubData=h2b('5e00000009000000024b505300000000'))
+        pkt.show()
+        hexdump(pkt)
+        print('\n')
+
+        pkt2 = GIOP(type='Reply',
+                    RequestID=1512578,
+                    ReplyStatus=0)
+        pkt2.show()
+        hexdump(pkt2)
 
     def test_proxy_cotp(self):
         pman = ProxyManager(iface='以太网 2')
