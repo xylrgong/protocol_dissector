@@ -1,4 +1,4 @@
-from scapy.fields import Field, FieldLenField
+from scapy.fields import *
 from scapy.utils import lhex
 
 

@@ -77,18 +77,26 @@ TARGET_ADDRESS_VALUES = {
 }
 
 
-# Field 'ServiceContextList' in GIOP Request
-class RequestServiceContextList(Packet):
+# Field 'ServiceContextList'
+class ServiceContextList(Packet):
     fields_desc = [
-        StrField('FixedHeadString', 'ist'),
-        PadField(IntFieldB('SequenceLength', 0x0, LITTLE_ENDIAN), 8)
+        IntFieldB('SequenceLength', 0x0, LITTLE_ENDIAN)
     ]
 
 
-# Field 'ServiceContextList' in GIOP Reply
-class ReplyServiceContextList(Packet):
+class GIOP_Request_Part1(Packet):
+    name = 'GIOP Request Part'
     fields_desc = [
-        IntFieldB('SequenceLength', 0x0, LITTLE_ENDIAN)
+        PacketField('GIOPHeader', GIOP_Header(), GIOP_Header),
+        XIntFieldB('RequestID', 0x00000000, LITTLE_ENDIAN),
+        XByteEnumField('ResponseFlags', 0x3, GIOP_RESPONSE_FLAGS),
+        X3BytesField('Reserved', 0x000000),
+        PadField(XShortEnumField('TargetAddress', 0x0000, TARGET_ADDRESS_VALUES), 4),  # 4字节对齐
+        FieldLenIntFieldB('KeyAddressLength', 0x0, LITTLE_ENDIAN, length_of='KeyAddress'),
+        PadField(StrField('KeyAddress', ''), 4),  # 4字节对齐
+        FieldLenIntFieldB('OperationLength', 0x0, LITTLE_ENDIAN, length_of='RequestOperation'),
+        PadField(StrField('RequestOperation', ''), 4),  # 4字节对齐
+        PacketField('ServiceContextList', ServiceContextList(), ServiceContextList)
     ]
 
 
@@ -96,23 +104,15 @@ class ReplyServiceContextList(Packet):
 class GIOP_Request(Packet):
     name = 'GIOP Request'
     fields_desc = [
-        XIntFieldB('RequestID', 0x00000000, LITTLE_ENDIAN),
-        XByteEnumField('ResponseFlags', 0x3, GIOP_RESPONSE_FLAGS),
-        X3BytesField('Reserved', 0x000000),
-        PadField(XShortEnumField('TargetAddress', 0x0000, TARGET_ADDRESS_VALUES), 4),
-        FieldLenIntFieldB('KeyAddressLength', 0x0, LITTLE_ENDIAN, length_of='KeyAddress'),
-        PadField(StrField('KeyAddress', ''), 4),
-        FieldLenIntFieldB('OperationLength', 0x0, LITTLE_ENDIAN, length_of='RequestOperation'),
-        StrField('RequestOperation', ''),
-        PacketField('ServiceContextList', RequestServiceContextList(), RequestServiceContextList),
+        PadField(PacketField('GIOPFixedPart', '', GIOP_Request_Part1), 8),
         XStrField('StubData', '')
     ]
 
     def post_build(self, pkt, pay):
-        self.KeyAddress = self.KeyAddress + b'\0'
-        self.RequestOperation = self.RequestOperation + b'\0'
-        self.KeyAddressLength = len(self.KeyAddress)
-        self.OperationLength = len(self.RequestOperation)
+        self.GIOPFixedPart.KeyAddress = self.GIOPFixedPart.KeyAddress + b'\0'
+        self.GIOPFixedPart.RequestOperation = self.GIOPFixedPart.RequestOperation + b'\0'
+        self.GIOPFixedPart.KeyAddressLength = len(self.GIOPFixedPart.KeyAddress)
+        self.GIOPFixedPart.OperationLength = len(self.GIOPFixedPart.RequestOperation)
         return self.self_build() + pay
 
 
@@ -126,35 +126,41 @@ GIOP_REPLY_STATUS = {
 }
 
 
+class GIOP_Reply_Part1(Packet):
+    name = 'GIOP Reply Part'
+    fields_desc = [
+        PacketField('GIOPHeader', GIOP_Header(), GIOP_Header),
+        XIntFieldB('RequestID', 0x00000000, LITTLE_ENDIAN),
+        IntEnumField('ReplyStatus', 0x0, GIOP_REPLY_STATUS),
+        PacketField('ServiceContextList', ServiceContextList(), ServiceContextList)
+    ]
+
+
 # GIOP Reply
 class GIOP_Reply(Packet):
     name = 'GIOP Reply'
     fields_desc = [
-        XIntFieldB('RequestID', 0x00000000, LITTLE_ENDIAN),
-        IntEnumField('ReplyStatus', 0x0, GIOP_REPLY_STATUS),
-        PacketField('ServiceContextList', ReplyServiceContextList(), ReplyServiceContextList),
+        PadField(PacketField('GIOPFixedPart', '', GIOP_Reply_Part1), 8),
         XStrField('StubData', '\x00')
     ]
-
-
-bind_layers(GIOP_Header, GIOP_Request, MessageType=0x0)
-bind_layers(GIOP_Header, GIOP_Reply, MessageType=0x1)
 
 
 # GIOP
 # @param type: GIOP_MESSAGE_TYPE, eg: 'Request'
 # @param **kwargs: 协议字段, eg: RequestID=0x171534, RequestOperation='idl_rcv_rdb_receive_data'
 def GIOP(type, **kwargs):
-    # GIOP Header
-    giop = GIOP_Header()
-    giop.MessageType = GIOP_MESSAGE_TYPE[1][type]
-
+    giop = None
     # GIOP Request
     if type==GIOP_MESSAGE_TYPE[0][0x0]:
-        giop = giop / GIOP_Request(**kwargs)
+        giop = GIOP_Request()
+        giop.StubData = kwargs.pop('StubData', giop.StubData)
+        giop.GIOPFixedPart = GIOP_Request_Part1(**kwargs)
     # GIOP Reply
     elif type==GIOP_MESSAGE_TYPE[0][0x1]:
-        giop = giop / GIOP_Reply(**kwargs)
+        giop = GIOP_Reply()
+        giop.StubData = kwargs.pop('StubData', giop.StubData)
+        giop.GIOPFixedPart = GIOP_Reply_Part1(**kwargs)
 
-    giop.MessageSize = len(giop) - 12
+    giop.GIOPFixedPart.GIOPHeader.MessageType = GIOP_MESSAGE_TYPE[1][type]
+    giop.GIOPFixedPart.GIOPHeader.MessageSize = len(giop) - 12
     return giop
