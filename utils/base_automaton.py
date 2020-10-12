@@ -247,8 +247,8 @@ class BaseAutomaton(Automaton):
 
         return cls
 
-    def __init__(self, *args, **kwargs):
-        Automaton.__init__(self, ll=conf.L2socket, *args, **kwargs)
+    def __init__(self, ll=conf.L2socket, *args, **kwargs):
+        Automaton.__init__(self, ll=ll, *args, **kwargs)
         self.in_queue = PacketQueue()
         self.out_queue = PacketQueue()
 

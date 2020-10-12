@@ -1,4 +1,5 @@
 from tests.test_passive_atmt import *
+from tests.test_atmt import *
 from automata.cotp.cotp_config import *
 from proxy.proxy_manager import *
 from protocols.packet_giop import *
@@ -10,7 +11,8 @@ class Test(object):
         pass
 
     def run(self):
-        self.test_packet_giop()
+        atmt = TestATMT()
+        atmt.runbg()
 
         print('Sleeping...')
         time.sleep(99999)
@@ -32,6 +34,20 @@ class Test(object):
                     ReplyStatus=0)
         pkt2.show()
         hexdump(pkt2)
+        print(to_hex(pkt2))
+        print('\n')
+
+        buf = '47494F5001020100640000003415170003000000000000001B00000014010F0052535403952B5F50290000030000000100000004000000001900000069646C5F7263765F7264625F726563656976655F646174610000000000000000000000005E00000009000000024B505300000000'
+        pkt3 = GIOP_Request(h2b(buf))
+        pkt3.show()
+        hexdump(pkt3)
+        print('\n')
+
+        buf2 = '47494F50 010201 00 0D000000 82141700000000000000000000'
+
+        pkt4 = GIOP_Reply(h2b(buf2))
+        pkt4.show()
+        hexdump(pkt4)
 
     def test_proxy_cotp(self):
         pman = ProxyManager(iface='以太网 2')

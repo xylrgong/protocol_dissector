@@ -6,9 +6,18 @@ class TestATMT(BaseAutomaton):
         BaseAutomaton.__init__(self, *args, **kwargs)
 
     def construct(self):
-        self.trans = [(s('BEGIN', initial=1) >> s('TMP')) + cond(timeout=1) + action(self.action1, a1=1, a2=2),
-                      (s('TMP') >> s('TMP2')) + cond(lambda: True),
-                      (s('TMP2') >> s('END', final=1)) + cond(timeout=2)]
+        self.trans = [
+            (s('INIT', initial=1) >> s('STATE1')) + cond(self.cond1),
+            (s('STATE1') >> s('STATE2')) + cond(timeout=5),
+            (s('STATE2') >> s('STATE3')) + cond(self.cond2_recv_pkt, recv_pkt=1),
+            (s('STATE3') >> s('END', final=1)),
+        ]
+
+    def cond1(self):
+        return True
+
+    def cond2_recv_pkt(self, pkt):
+        return True
 
     def action1(self, a1, a2=None):
         print(a1, a2)
