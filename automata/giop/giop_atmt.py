@@ -4,6 +4,8 @@ from utils.base_automaton import *
 from config import *
 from socket import *
 
+SRC_IP = ''
+
 
 class GIOPATMTBase(BaseAutomaton):
     def __init__(self, *args, **kwargs):
@@ -33,7 +35,10 @@ class GIOPRequestATMT(GIOPATMTBase):
             (s('BEGIN', initial=1) >> s('WAIT_REPLY_DIC_READ_INT_INFO_TAG')) +
             cond(self.tcp_connect) + action(self.send_idl_dic_read_int_info_tag),
             (s('WAIT_REPLY_DIC_READ_INT_INFO_TAG') >> s('WAIT_REPLY_DIC_READ_INT_INFO_TAG_2')) +
-            cond(self.recv_reply1, recv_pkt=1) + action(self.send_idl_dic_read_int_info_tag_2)
+            cond(self.recv_reply1, recv_pkt=1) + action(self.send_idl_dic_read_int_info_tag_2),
+            (s('WAIT_REPLY_DIC_READ_INT_INFO_TAG_2') >> s('WAIT_REPLY_DIC_DB_SUBSCRIBE')) +
+            cond(self.recv_reply1, recv_pkt=1) + action(self.send_idl_db_subsribe),
+
             # 建立TCP连接
             # 发送 idl_dic_read_int_info_tag
             #     收到 reply
@@ -48,12 +53,12 @@ class GIOPRequestATMT(GIOPATMTBase):
 
     def send_idl_dic_read_int_info_tag(self):
         # 封装数据包
-        pkt = IP(src='...', dst='...') / TCP(dport=10000) / \
+        pkt = IP(src='192.168.69.201', dst='192.168.69.111') / TCP(dport=10000) / \
               GIOP(type='Request',
-                   RequestID=1512756,
-                   KeyAddress=h2b('14010f0052535403952b5f502900000300000001000000040000'),
-                   RequestOperation='idl_rcv_rdb_receive_data',
-                   StubData=h2b('5e00000009000000024b505300000000'))
+                   RequestID=27090,
+                   KeyAddress=h2b('14010f00525354b0942b5f771f0600060000000100000007000000'),
+                   RequestOperation='idl_dic_read_int_info_tag',
+                   StubData=h2b('0800434441502020202020202020202020'))
         self.send(pkt)
         self.request_id = pkt.GIOPFixedPart.RequestID  # 取得request_id
 
@@ -77,3 +82,16 @@ class GIOPRequestATMT(GIOPATMTBase):
             if request_id == self.request_id:
                 return True
         return False
+
+    def send_idl_dic_read_int_info_tag_2(self):
+        pkt = IP(src='192.168.69.201', dst='192.168.69.111') / TCP(dport=10000) / \
+              GIOP(type='Request', 
+                   RequestID=27091,
+                   KeyAddress=h2b('14010f00525354b0942b5f771f0600060000000100000007000000'),
+                   RequestOperation='idl_dic_read_int_info_tag',
+                   StubData=h2b('0800434452502020202020202020202020'))
+        self.send(pkt)
+        self.request_id = pkt.GIOPFixedPart.RequestID
+
+
+
