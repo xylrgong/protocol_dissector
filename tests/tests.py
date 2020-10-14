@@ -1,5 +1,6 @@
 from tests.test_passive_atmt import *
 from tests.test_atmt import *
+from tests.test_giop_1 import *
 from automata.cotp.cotp_config import *
 from proxy.proxy_manager import *
 from protocols.packet_giop import *
@@ -11,8 +12,7 @@ class Test(object):
         pass
 
     def run(self):
-        atmt = TestATMT()
-        atmt.runbg()
+        Test_GIOP().test_giop_atmt()
 
         print('Sleeping...')
         time.sleep(99999)

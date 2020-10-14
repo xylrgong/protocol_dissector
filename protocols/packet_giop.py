@@ -117,7 +117,7 @@ class GIOP_Request(Packet):
     ]
 
     def post_build(self, pkt, pay):
-        self.GIOPFixedPart.KeyAddress = self.GIOPFixedPart.KeyAddress + b'\0'
+        self.GIOPFixedPart.KeyAddress = self.GIOPFixedPart.KeyAddress
         self.GIOPFixedPart.RequestOperation = self.GIOPFixedPart.RequestOperation + b'\0'
         self.GIOPFixedPart.KeyAddressLength = len(self.GIOPFixedPart.KeyAddress)
         self.GIOPFixedPart.OperationLength = len(self.GIOPFixedPart.RequestOperation)
