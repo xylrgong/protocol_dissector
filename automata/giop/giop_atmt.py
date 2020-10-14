@@ -38,20 +38,23 @@ class GIOPRequestATMT(GIOPATMTBase):
             (s('BEGIN', initial=1) >> s('WAIT_REPLY_DIC_READ_INT_INFO_TAG')) +
             cond(self.tcp_connect) + action(self.send_idl_dic_read_int_info_tag),
             (s('WAIT_REPLY_DIC_READ_INT_INFO_TAG') >> s('WAIT_REPLY_DIC_READ_INT_INFO_TAG_2')) +
-            cond(self.recv_reply('corresponding_requestID_is_27090'), recv_pkt=0) + action(
-                self.send_idl_dic_read_int_info_tag_2),
+            cond(self.recv_reply('corresponding_requestID_is_27090'), recv_pkt=0) +
+            action(self.send_idl_dic_read_int_info_tag_2),
             (s('WAIT_REPLY_DIC_READ_INT_INFO_TAG_2') >> s('WAIT_REPLY_DB_SUBSCRIBE')) +
-            cond(self.recv_reply('corresponding_requestID_is_27091'), recv_pkt=0) + action(self.send_idl_db_subsribe),
+            cond(self.recv_reply('corresponding_requestID_is_27091'), recv_pkt=0) +
+            action(self.send_idl_db_subsribe),
             (s('WAIT_REPLY_DB_SUBSCRIBE') >> s('WAIT_REPLY_DB_SUBSCRIBE_2')) +
-            cond(self.recv_reply('corresponding_requestID_is_27092'), recv_pkt=0) + action(self.send_idl_db_subsribe_2),
-            (s('WAIT_REPLY_DB_SUBSCRIBE_2')) >> (s('WAIT_REPLY_DB_LOCKED_MULTIPLE_WRITE')) +
-            cond(self.recv_reply('corresponding_requestID_is_27093'), recv_pkt=0) + action(self.send_idl_db_locked_multiple_write),
+            cond(self.recv_reply('corresponding_requestID_is_27092'), recv_pkt=0) +
+            action(self.send_idl_db_subsribe_2),
+            (s('WAIT_REPLY_DB_SUBSCRIBE_2') >> s('WAIT_REPLY_DB_LOCKED_MULTIPLE_WRITE')) +
+            cond(self.recv_reply('corresponding_requestID_is_27093'), recv_pkt=0) +
+            action(self.send_idl_db_locked_multiple_write),
             (s('WAIT_REPLY_DB_LOCKED_MULTIPLE_WRITE') >> s('WAIT_REPLY_DB_UNSUBSCRIBE')) +
-            cond(self.recv_reply('corresponding_requestID_is_27094'), recv_pkt=0) + action(
-                self.send_idl_db_unsubscribe),
+            cond(self.recv_reply('corresponding_requestID_is_27094'), recv_pkt=0) +
+            action(self.send_idl_db_unsubscribe),
             (s('WAIT_REPLY_DB_UNSUBSCRIBE') >> s('WAIT_REPLY_DB_UNSUBSCRIBE_2')) +
-            cond(self.recv_reply('corresponding_requestID_is_27095'), recv_pkt=0) + action(
-                self.send_idl_db_unsubscribe_2),
+            cond(self.recv_reply('corresponding_requestID_is_27095'), recv_pkt=0) +
+            action(self.send_idl_db_unsubscribe_2),
             (s('WAIT_REPLY_DB_UNSUBSCRIBE_2') >> s('END', final=1))
 
             # 建立TCP连接
