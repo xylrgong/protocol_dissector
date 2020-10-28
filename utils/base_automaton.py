@@ -91,11 +91,12 @@ class BaseAutomaton(Automaton):
         #             1 - receive_condition
         #             2 - timeout
         #             3 - wait for
-        def __init__(self, func=None, cond_type=0, timeout=0, prio=0):
+        def __init__(self, func=None, cond_type=0, timeout=0, prio=0, need_log=True):
             self._func = func
             self._type = cond_type
             self._prio = prio
             self._timeout = timeout
+            self._need_log = need_log
             if not self._func:
                 self._func = lambda: True
             if self._func.__name__ == '<lambda>':
@@ -109,7 +110,8 @@ class BaseAutomaton(Automaton):
             if self._type == 0:
                 @ATMT.condition(state, prio=self._prio)
                 def f(obj_self):
-                    log.debug('条件：{:<35}自动机：{}'.format(self.attr_name, obj_self))
+                    if self._need_log:
+                        log.debug('条件：{:<35}自动机：{}'.format(self.attr_name, obj_self))
                     if self._func():
                         raise next_state(obj).action_parameters(*args, **kwargs)
                 cf = f
@@ -117,7 +119,8 @@ class BaseAutomaton(Automaton):
             elif self._type == 1:
                 @ATMT.receive_condition(state, prio=self._prio)
                 def f(obj_self, pkt):
-                    log.debug('条件：{:<35}自动机：{}'.format(self.attr_name, obj_self))
+                    if self._need_log:
+                        log.debug('条件：{:<35}自动机：{}'.format(self.attr_name, obj_self))
                     if self._func(pkt):
                         raise next_state(obj).action_parameters(*args, **kwargs)
                 cf = f
@@ -125,7 +128,8 @@ class BaseAutomaton(Automaton):
             elif self._type == 2:
                 @ATMT.timeout(state, self._timeout)
                 def f(obj_self):
-                    log.debug('条件：{:<35}自动机：{}'.format(self.attr_name, obj_self))
+                    if self._need_log:
+                        log.debug('条件：{:<35}自动机：{}'.format(self.attr_name, obj_self))
                     if self._func():
                         raise next_state(obj).action_parameters(*args, **kwargs)
                 cf = f
@@ -134,7 +138,8 @@ class BaseAutomaton(Automaton):
                 @ATMT.condition(state, prio=self._prio)
                 def f(obj_self):
                     while True:
-                        log.debug('条件：{:<35}自动机：{}'.format(self.attr_name, obj_self))
+                        if self._need_log:
+                            log.debug('条件：{:<35}自动机：{}'.format(self.attr_name, obj_self))
                         pkt = obj.in_queue.recv_pkt_block(1)[0]
                         if not isinstance(pkt, Packet):
                             log.warning('Unexpected pipe data: {}'.format(pkt))
@@ -299,13 +304,13 @@ def s(func, initial=0, final=0, error=0):
 # recv_pkt=True表示此条件需要根据接收的数据包作判断
 #     当使用 recv_pkt标志时，func需要声明为这样的形式： def func(self, pkt)
 # prio表示条件函数调用的优先级，0表示最高优先级
-def cond(func=None, timeout=0, recv_pkt=False, prio=0):
+def cond(func=None, timeout=0, recv_pkt=False, prio=0, need_log=True):
     cond_type = 0
     if recv_pkt:
         cond_type = 1
     if timeout > 0:
         cond_type = 2
-    return BaseAutomaton.ATMTCondition(func, cond_type, timeout, prio)
+    return BaseAutomaton.ATMTCondition(func, cond_type, timeout, prio, need_log)
 
 
 # 等待外部输入的条件，func需要具有这样的签名：

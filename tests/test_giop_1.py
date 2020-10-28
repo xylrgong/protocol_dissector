@@ -10,6 +10,6 @@ from automata.giop.giop_config import *
 
 class Test_GIOP(object):
     def test_giop_atmt(self):
-        params = GIOPConfig(iface='以太网')
+        params = GIOPConfig(iface='以太网 2')
         atmt_obj = GIOPRequestATMT(params=params)
         atmt_obj.run()
