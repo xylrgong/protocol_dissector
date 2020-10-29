@@ -9,7 +9,6 @@ class S5_CLIENT_ATMT_Baseclass(BaseAutomaton):
         self.nooferr = 0
         self.is_dconnected = False
 
-
     def send_dwnr(self, dwnr):
         pkt = H1(*h1_payload[dwnr][0]) / hex_bytes(h1_payload[dwnr][1])
         print('已发送', dwnr)

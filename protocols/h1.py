@@ -39,7 +39,7 @@ OPCODE = (
         0x0f: "NULL",  # 空操作码
         0x0d: "client",
         0x8d: "server",
-        0x8e:"Unknown"
+        0x8e: "Unknown"
 
     },
     {

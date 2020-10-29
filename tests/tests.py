@@ -1,6 +1,5 @@
 from tests.test_passive_atmt import *
 from tests.test_atmt import *
-from tests.test_giop_1 import *
 from tests.test_fangjiashan import *
 from automata.cotp.cotp_config import *
 from proxy.proxy_manager import *

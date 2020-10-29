@@ -3,6 +3,7 @@ from automata.s5.S5_config import *
 from automata.s5.s5_valve_client_atmt import *
 from automata.s5.s5_ap_client_atmt import *
 
+
 class s5_client(object):
     def __init__(self, dmac, smac, sref, iface):
         self.dconnect_atmt = None
@@ -13,7 +14,9 @@ class s5_client(object):
         self.valve_cotp_skt = None
         self.ap_cotp_skt = None
 
-
+    # TODO: 注释，添加参数说明
+    # valva_name支持的取值
+    # op_type支持的取值
     def do_valve(self, valve_name='', op_type = ''):
         self.valve_cotp_skt = self.get_cotp_skt()
         # 开启动态连接
@@ -57,21 +60,4 @@ class s5_client(object):
 
     def get_cotp_skt(self):
         return COTPSocket(dmac=self.s5_params.dmac, smac=self.s5_params.smac, sref=self.s5_params.sref, iface=self.s5_params.iface)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
