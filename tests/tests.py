@@ -1,6 +1,7 @@
 from tests.test_passive_atmt import *
 from tests.test_atmt import *
 from tests.test_fangjiashan import *
+from tests.test_s5 import *
 from automata.cotp.cotp_config import *
 from proxy.proxy_manager import *
 from protocols.packet_giop import *
@@ -12,7 +13,7 @@ class Test(object):
         pass
 
     def run(self):
-        # Test_GIOP().test_giop_atmt()
+        # TestS5().test()
         TestFangJiaShan().test()
 
         print('Sleeping...')

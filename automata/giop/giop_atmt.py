@@ -5,6 +5,12 @@ from config import *
 from socket import *
 import time
 
+
+###################
+#   这个文件已弃用   #
+###################
+
+
 TEST_HOST = '54:BF:64:0C:B4:B6'
 TEST_IP = '169.254.58.190'
 SRC_MAC = '80:e8:2c:cb:43:4f'

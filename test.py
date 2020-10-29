@@ -1,7 +1,6 @@
 from scapy.layers.l2 import Dot3, LLC
 from protocols.cotp import *
 from scapy.utils import hexdump
-from automata.cotp.cotp_automaton import *
 from automata.cotp.cotp_socket import *
 from config import *
 from protocols.h1 import *
@@ -26,6 +25,7 @@ def main():
     pass
 #      hexPKTstr = str(binascii.b2a_hex(bytes(*pkt, encoding="utf8")))
 #      hexDWNRstr = hexPKTstr[22: 22 + len]
+
 
 if __name__ == "__main__":
     main()
