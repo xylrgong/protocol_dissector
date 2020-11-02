@@ -33,9 +33,4 @@ class S5_CLIENT_ATMT_Baseclass(BaseAutomaton):
         _cotp_conn.__name__ = connect_name
         return _cotp_conn
 
-    # def verifyDWNR(self, pkt, dwnr):
-    #     h1_pkt = dissect_h1_ex(*pkt)
-    #     pkt_DWNR = int.from_bytes(h1_pkt.Address_within_memory_block, byteorder='big')
-    #     log.debug('收到序列号：{}'.format(pkt_DWNR))
-    #     return pkt_DWNR == dwnr
 

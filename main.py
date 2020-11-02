@@ -1,8 +1,9 @@
 from tests.tests import *
+from tests.test_s5 import *
 
 
 def main():
-    Test().run()
+    TestS5().run()
     print('About to quit.')
     pass
 

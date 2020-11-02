@@ -4,7 +4,6 @@ from scapy.utils import hexdump
 from automata.cotp.cotp_socket import *
 from config import *
 from protocols.h1 import *
-from automata.s5.s5_socket import*
 from automata.s5.S5_config import*
 from automata.s5.s5_server import *
 
@@ -13,7 +12,7 @@ import binascii
 
 def main():
     skt = s5_server(dmac='00:30:6e:0c:87:4e', smac='08:00:06:1a:11:11', sref=0x0c01,
-                     iface='以太网 2')
+                     iface='以太网')
     skt.accept_order()
     # skt = COTPSocket(dmac='00:30:6e:0c:87:4e', smac='08:00:06:1a:11:11', sref=0x0c01,
     #                  iface='以太网')

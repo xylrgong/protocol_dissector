@@ -57,7 +57,7 @@ OPERATE_DATA = (
         "aa104": AA104,  #
     }
 )
-
+#上表均为服务端用于识别客户端的操作类型和设备名称，仅作测试使用
 
 class S5_COTP_Params(object):
     def __init__(self, dmac='00:00:00:00:00:00', smac='00:00:00:00:00:00', sref=0x00, iface=''):
@@ -66,11 +66,13 @@ class S5_COTP_Params(object):
         self.smac = smac
         self.sref = sref
 
-
-# TODO: 组成
+# H1数据包构造方式：H1(opcode_name = 'client', request_block = ['DB',0x02,0x5304,0x0402])
+# h1_payload的列表元素：
 # [
-#    第一个元素是个啥...
-#    第二个元素是个啥...
+#    第一个元素为H1协议中Opcode字段
+#    第二个元素为一个列表元素，分别对应H1协议请求块中的 memory_type， memory_block_number， address_within_memory_block，
+#                                              length_in_words
+#    第三个元素为H1数据包的负载
 # ]
 h1_payload = {
     '5124': [('client', ['DB', 0x02, 0x1404, 0x0402, 0x0402]), '00000000103f1032000efc02'],

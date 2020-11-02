@@ -9,14 +9,13 @@ class s5_client(object):
         self.dconnect_atmt = None
         self.valve_client_atmt = None
         self.ap_client_atmt =None
-        self.is_running = False    # 控制器运行状态
+        self.is_running = False    # 控制器运行状态(False:停止；True：运行中) 服务端和客户端状态需保持一致
         self.s5_params = S5_COTP_Params(dmac, smac, sref, iface)
         self.valve_cotp_skt = None
         self.ap_cotp_skt = None
 
-    # TODO: 注释，添加参数说明
-    # valva_name支持的取值
-    # op_type支持的取值
+    # valva_name支持的取值：aa101,aa102,aa103,aa104
+    # op_type支持的取值:open,close
     def do_valve(self, valve_name='', op_type = ''):
         self.valve_cotp_skt = self.get_cotp_skt()
         # 开启动态连接
@@ -32,10 +31,10 @@ class s5_client(object):
         self.valve_client_atmt = S5_VALVE_OPERATE_ATMT(cotp_skt=self.valve_cotp_skt, valve_name=valve_name, op_type='reset')
         self.valve_client_atmt.run()
 
-    # 若AP状态为关闭，则该操作启动控制器，反之亦然
+    # 若AP状态为停止，则该操作启动控制器，反之亦然
     def do_ap(self):
         self.ap_cotp_skt = self.get_cotp_skt()
-        self.ap_client_atmt = S5_ATMT_AP_OPERATE(cotp_skt=self.ap_cotp_skt, is_starting=not self.is_running, ap_callback=self.operate_ap)
+        self.ap_client_atmt = S5_ATMT_AP_OPERATE(cotp_skt=self.ap_cotp_skt, is_starting=not self.is_running)
         self.ap_client_atmt.run()
 
     def do_dis_dconnect(self):    # 关闭动态连接
@@ -51,12 +50,6 @@ class s5_client(object):
     def _do_clear(self):
         self.dconnect_atmt = None
         self.valve_client_atmt = None
-
-    def operate_ap(self):
-        if not self.is_running:
-            s5_client.ap_running = True
-        else:
-            s5_client.ap_running = False
 
     def get_cotp_skt(self):
         return COTPSocket(dmac=self.s5_params.dmac, smac=self.s5_params.smac, sref=self.s5_params.sref, iface=self.s5_params.iface)
