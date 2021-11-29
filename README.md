@@ -16,7 +16,7 @@ protocol_dissector是工控协议解析与回放系统的编码实现
 	此协议目前支持AP阀门设备的启停，和AP控制器的启停
 	
 	S5协议的测试脚本在文件tests/test_s5.py中，可使用以下测试步骤：
-	1. 修改tests/tests.py文件的run()函数，在其中调用TestS5().test()
+	1. 修改tests/test.py文件的run()函数，在其中调用TestS5().test()
 	2. 修改tests/test_s5.py文件的test()函数，在其中调用测试函数
 	3. 修改tests/test_s5.py文件中的变量 TEST_IFACE，将其修改为本机使用的网络接口名
 	4. 运行path_to_project/main.py，可在控制台运行，也可在IDE中运行
@@ -31,7 +31,7 @@ protocol_dissector是工控协议解析与回放系统的编码实现
 		
 	这三段通信的回放攻击脚本在文件tests/test_fangjiashan.py中，可使用以下测试步骤：
 	1. 修改本机IP配置，使本机与目标服务器位于同一网段
-	2. 修改tests/tests.py文件的run()函数，在其中调用TestFangJiaShan().test()
+	2. 修改tests/test.py文件的run()函数，在其中调用TestFangJiaShan().test()
 	3. 修改tests/test_fangjiashan.py文件的test()函数，在其中调用测试函数
 	4. 运行path_to_project/main.py，可在控制台运行，也可在IDE中运行
 	

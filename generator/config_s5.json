@@ -1,0 +1,14 @@
+{
+	"src": "aa:bb:cc:dd:ee:ff",
+	"dst": "ff:ff:ff:ff:ff:ff",
+    "len_ether": "34",
+    "dsap": "0xfe",
+    "ssap": "0xfe",
+    "ctrl": "0x03",
+    "sref": "0x80ef",
+    "dref": "0x0010",
+    "Block_type": "0x04",
+    "Block_length": "0x06",
+    "Memory_type": "0x03",
+    "H1_data": "0x054321"
+}

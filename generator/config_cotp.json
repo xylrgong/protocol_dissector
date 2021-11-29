@@ -1,0 +1,10 @@
+{
+	"src": "aa:bb:cc:dd:ee:ff",
+	"dst": "ff:ff:ff:ff:ff:ff",
+    "len_ether": "34",
+    "dsap": "0xfe",
+    "ssap": "0xfe",
+    "ctrl": "0x03",
+    "sref": "0xaaaa",
+    "dref": "0xbbbb"
+}

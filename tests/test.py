@@ -2,6 +2,10 @@ from tests.test_passive_atmt import *
 from tests.test_atmt import *
 from tests.test_fangjiashan import *
 from tests.test_s5 import *
+# from test_passive_atmt import *
+# from test_atmt import *
+# from test_fangjiashan import *
+# from test_s5 import *
 from automata.cotp.cotp_config import *
 from proxy.proxy_manager import *
 from protocols.packet_giop import *
@@ -15,6 +19,7 @@ class Test(object):
     def run(self):
         # TestS5().test()
         TestFangJiaShan().test()
+        self.test_proxy_cotp()
 
         print('Sleeping...')
         time.sleep(99999)
@@ -52,7 +57,7 @@ class Test(object):
         hexdump(pkt4)
 
     def test_proxy_cotp(self):
-        pman = ProxyManager(iface='以太网 2')
+        pman = ProxyManager(iface='以太网')
         pman.run()
 
         pkt1 = COTP_Dot3(dst='AA:AA:AA:AA:AA:AA', src='BB:BB:BB:BB:BB:BB') / \
