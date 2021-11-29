@@ -1,0 +1,9 @@
+{
+	"src": "aa:bb:cc:dd:ee:ff",
+	"dst": "ff:ff:ff:ff:ff:ff",
+    "op": "1",
+    "hwsrc": "aa:bb:cc:dd:ee:ff",
+    "psrc": "10.50.253.232",
+    "hwdst": "00:00:00:00:00:00",
+    "pdst": "10.50.0.1"
+}
